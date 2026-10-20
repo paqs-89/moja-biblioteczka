@@ -691,7 +691,7 @@ function renderStoreFilterOptions() {
   const datalist = document.getElementById('storeSuggestions');
   const defaultShops = [
     'Empik', 'Allegro', 'Bonito', 'Świat Książki', 'TaniaKsiazka.pl',
-    'Publio', 'Woblink', 'Legimi', 'Ebookpoint', 'Antykwariat', 'Prezent', 'Targi Książki'
+    'UpolujEbooka', 'Publio', 'Woblink', 'Legimi', 'Ebookpoint', 'Antykwariat', 'Prezent', 'Targi Książki'
   ];
   const allSuggestions = Array.from(new Set([...defaultShops, ...sortedStores]));
   datalist.innerHTML = allSuggestions.map((s) => `<option value="${escapeHtml(s)}"></option>`).join('');
@@ -1142,6 +1142,9 @@ function translateGenreToPolish(rawGenre) {
     'mysteries & thrillers': 'Kryminał / Thriller',
     'thrillers': 'Kryminał / Thriller',
     'mystery & detective': 'Kryminał / Thriller',
+    'kryminał': 'Kryminał / Thriller',
+    'sensacja': 'Kryminał / Thriller',
+    'thriller': 'Kryminał / Thriller',
     'horror': 'Powieść grozy',
     'powieść grozy': 'Powieść grozy',
     'powieść amerykańska': 'Powieść',
@@ -1151,11 +1154,16 @@ function translateGenreToPolish(rawGenre) {
     'young adult fiction': 'Young Adult',
     'science fiction': 'Sci-Fi',
     'sci-fi & fantasy': 'Fantasy',
+    'fantastyka': 'Fantasy',
     'fantasy': 'Fantasy',
     'romance': 'Obyczajowa / Romans',
     'biography & autobiography': 'Biografia / Historia',
     'biographies & memoirs': 'Biografia / Historia',
     'history': 'Biografia / Historia',
+    'historia': 'Biografia / Historia',
+    'biografie': 'Biografia / Historia',
+    'reportaż': 'Reportaż / Literatura faktu',
+    'literatura faktu': 'Reportaż / Literatura faktu',
     'self-help': 'Rozwój osobisty',
     'psychology': 'Psychologia',
     'business & economics': 'Biznes / Finanse',
@@ -1171,53 +1179,148 @@ function translateGenreToPolish(rawGenre) {
   return rawGenre.trim();
 }
 
+async function fetchFromSwiatCzytnikowEbook(isbn) {
+  try {
+    const targetUrl = `https://ebooki.swiatczytnikow.pl/ebook/${encodeURIComponent(isbn)}`;
+    const jinaUrl = `https://r.jina.ai/${targetUrl}`;
+    const res = await fetchWithTimeout(jinaUrl, 8500, {
+      headers: { Accept: 'text/plain' }
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text || (!text.includes(`ISBN: ${isbn}`) && !text.includes(`/ebook/${isbn}`))) {
+      return null;
+    }
+
+    // Wyciągnij tytuł z nagłówka "# Tytuł" lub z nagłówka strony "Title: Tytuł, Autor..."
+    const h1Match = text.match(/^#\s+([^\n]+)$/m);
+    const pageTitleMatch = text.match(/^Title:\s*([^,\n]+)/m);
+    const title = (h1Match?.[1] || pageTitleMatch?.[1] || '').trim();
+    if (!title || /porównywarka|świat czytników|404/i.test(title)) return null;
+
+    // Autor: [Dan Simmons](...)
+    const authorMatch =
+      text.match(/Autor:\s*\[([^\]]+)\]/i) ||
+      text.match(/Autor:\s*([^\n\[]+)/i);
+    const author = (authorMatch?.[1] || '').trim();
+
+    // Wydawnictwo: [Mag](...)
+    const pubMatch =
+      text.match(/Wydawnictwo:\s*\[([^\]]+)\]/i) ||
+      text.match(/Wydawnictwo:\s*([^\n\[]+)/i);
+    const publisher = (pubMatch?.[1] || '').trim();
+
+    // Okładka wysokiej rozdzielczości ze Świata Czytników
+    const coverMatch = text.match(/!\[[^\]]*\]\((https:\/\/static\.swiatczytnikow\.pl\/img\/covers\/[^)\s]+)\)/i);
+    const coverUrl = coverMatch?.[1] || '';
+
+    // Gatunek / Tematy: linki do https://ebooki.swiatczytnikow.pl/temat/...
+    let rawCategory = '';
+    const tagMatches = [...text.matchAll(/\[([^\]]+)\]\(https?:\/\/ebooki\.swiatczytnikow\.pl\/temat\/[^)]+\)/gi)].map(
+      (m) => m[1].trim()
+    );
+    if (tagMatches.length) {
+      const preferredTag =
+        tagMatches.find((t) =>
+          /horror|krymina|thriller|sci-fi|science fiction|fantasy|fantastyka|reporta|biograf|histori/i.test(t)
+        ) ||
+        tagMatches[0] ||
+        '';
+      rawCategory = preferredTag;
+    }
+
+    // Opis wydawcy (akapity pomiędzy "Oszczędzasz: ..." / "Najniższa cena ..." a "[Pokaż więcej]" / "Kup teraz")
+    let description = '';
+    const descSectionMatch = text.match(
+      /(?:Oszczędzasz:[^\n]*|Najniższa cena[^\n]*|Wydawnictwo:\s*\[[^\]]+\]\([^)]+\))\n+([\s\S]*?)\n+(?:\[Pokaż więcej\]|Kup teraz|Ustaw alert cenowy|Powiadomienia o promocjach|Historia cen)/i
+    );
+    if (descSectionMatch?.[1]) {
+      const paras = descSectionMatch[1]
+        .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter((p) => p && !/^(?:Najniższa cena|Oszczędzasz:)/i.test(p));
+      if (paras.length >= 2 && paras[0].endsWith('...') && paras[1].startsWith(paras[0].slice(0, 35))) {
+        paras.shift();
+      }
+      description = paras.join('\n\n').trim();
+    }
+
+    return {
+      isbn,
+      title,
+      author,
+      publisher,
+      publishedYear: '',
+      pages: '',
+      category: rawCategory,
+      description,
+      coverUrl,
+      isEbookHint: true
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 async function fetchBookDetailsByIsbn(rawIsbn) {
   const isbn = normalizeIsbn(rawIsbn);
   if (isbn.length !== 10 && isbn.length !== 13) {
     throw new Error('Numer ISBN powinien składać się z 10 lub 13 cyfr.');
   }
 
-  const [bnRes, googleRes, openLibRes, appleRes] = await Promise.allSettled([
+  const [bnRes, scRes, googleRes, openLibRes, appleRes] = await Promise.allSettled([
     fetchFromBibliotekaNarodowa(isbn),
+    fetchFromSwiatCzytnikowEbook(isbn),
     fetchFromGoogleBooks(isbn),
     fetchFromOpenLibrary(isbn),
     fetchFromAppleBooksByIsbn(isbn)
   ]);
 
   const bnData = bnRes.status === 'fulfilled' ? bnRes.value : null;
+  const scData = scRes.status === 'fulfilled' ? scRes.value : null;
   const gData = googleRes.status === 'fulfilled' ? googleRes.value : null;
   const olData = openLibRes.status === 'fulfilled' ? openLibRes.value : null;
   const apData = appleRes.status === 'fulfilled' ? appleRes.value : null;
 
-  if (!bnData && !gData && !olData && !apData) {
+  if (!bnData && !scData && !gData && !olData && !apData) {
     throw new Error(`Nie znaleziono książki o numerze ISBN ${isbn} w katalogach online. Wyszukaj ją po tytule poniżej.`);
   }
 
-  const rawCategory = pickBestString(bnData?.category, gData?.category, apData?.category, olData?.category);
+  const rawCategory = pickBestString(
+    bnData?.category,
+    scData?.category,
+    gData?.category,
+    apData?.category,
+    olData?.category
+  );
 
   const merged = {
     isbn,
-    title: pickBestString(bnData?.title, gData?.title, apData?.title, olData?.title),
-    author: pickBestString(bnData?.author, gData?.author, apData?.author, olData?.author),
-    publisher: pickBestString(bnData?.publisher, gData?.publisher, olData?.publisher, apData?.publisher),
+    title: pickBestString(bnData?.title, scData?.title, gData?.title, apData?.title, olData?.title),
+    author: pickBestString(bnData?.author, scData?.author, gData?.author, apData?.author, olData?.author),
+    publisher: pickBestString(bnData?.publisher, scData?.publisher, gData?.publisher, olData?.publisher, apData?.publisher),
     publishedYear: pickBestString(bnData?.publishedYear, gData?.publishedYear, olData?.publishedYear, apData?.publishedYear),
     pages: bnData?.pages || gData?.pages || olData?.pages || '',
     category: translateGenreToPolish(rawCategory),
-    description: pickBestString(gData?.description, apData?.description, olData?.description, bnData?.description),
-    coverUrl: pickBestString(gData?.coverUrl, apData?.coverUrl, olData?.coverUrl),
-    isEbookHint: Boolean(bnData?.isEbookHint || gData?.isEbookHint),
+    description: pickBestString(scData?.description, gData?.description, apData?.description, olData?.description, bnData?.description),
+    coverUrl: pickBestString(scData?.coverUrl, gData?.coverUrl, apData?.coverUrl, olData?.coverUrl),
+    isEbookHint: Boolean(scData?.isEbookHint || bnData?.isEbookHint || gData?.isEbookHint),
     sources: [
       bnData ? 'Biblioteka Narodowa' : null,
+      scData ? 'Świat Czytników (E-book)' : null,
       gData ? 'Google Books' : null,
       apData ? 'Apple Books' : null,
       olData ? 'Open Library' : null
     ].filter(Boolean)
   };
 
-  // Jeśli pobraliśmy polskie wydanie z Biblioteki Narodowej (np. Drood 9788367023061),
-  // automatycznie dociągamy okładkę HD i opis z Apple Books / Open Library / Google Books po tytule i autorze!
-  if ((!merged.coverUrl || !merged.description) && merged.title) {
-    const enriched = await enrichBookByTitleAuthor(merged.title, merged.author, isbn);
+  // Jeśli brakuje okładki, opisu, liczby stron lub roku polskiego wydania (np. przy ISBN e-booka ze Świata Czytników
+  // lub wydaniu papierowym z Biblioteki Narodowej) — dociągnij brakujące pola po tytule i autorze!
+  if ((!merged.coverUrl || !merged.description || !merged.pages || !merged.publishedYear) && merged.title) {
+    const needPolishMeta = !merged.pages || !merged.publishedYear;
+    const enriched = await enrichBookByTitleAuthor(merged.title, merged.author, isbn, needPolishMeta);
     if (!merged.coverUrl && enriched.coverUrl) {
       merged.coverUrl = enriched.coverUrl;
     }
@@ -1226,6 +1329,15 @@ async function fetchBookDetailsByIsbn(rawIsbn) {
     }
     if (!merged.category && enriched.category) {
       merged.category = translateGenreToPolish(enriched.category);
+    }
+    if (!merged.pages && enriched.pages) {
+      merged.pages = enriched.pages;
+    }
+    if (!merged.publishedYear && enriched.publishedYear) {
+      merged.publishedYear = enriched.publishedYear;
+    }
+    if (!merged.publisher && enriched.publisher) {
+      merged.publisher = enriched.publisher;
     }
     if (enriched.source && !merged.sources.includes(enriched.source)) {
       merged.sources.push(enriched.source);
@@ -1457,15 +1569,25 @@ async function fetchFromAppleBooksByIsbn(isbn) {
   }
 }
 
-async function enrichBookByTitleAuthor(title, author, isbn = '') {
-  const result = { coverUrl: '', description: '', category: '', source: '' };
+async function enrichBookByTitleAuthor(title, author, isbn = '', needPolishMeta = false) {
+  const result = {
+    coverUrl: '',
+    description: '',
+    category: '',
+    pages: '',
+    publishedYear: '',
+    publisher: '',
+    source: ''
+  };
   const cleanTitle = (title || '').trim();
   const cleanAuthor = (author || '').split(',')[0].trim();
   const q = `${cleanTitle} ${cleanAuthor}`.trim();
 
-  // 1. Odpytaj równolegle Apple Books (iTunes PL), Open Library Search, Google Books oraz okładkę OpenLibrary po ISBN
+  // 1. Odpytaj równolegle Świat Czytników, Apple Books (iTunes PL), Open Library Search, Google Books, okładkę OpenLibrary po ISBN
+  //    oraz opcjonalnie katalog OMNIS Biblioteki Narodowej (gdy mamy e-booka ze Świata Czytników i chcemy dociągnąć liczbę stron / rok wydania)
   const olIsbnCoverUrl = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : '';
-  const [applePlRes, openLibSearchRes, googleSearchRes, olCoverExistsRes] = await Promise.allSettled([
+  const [scSearchRes, applePlRes, openLibSearchRes, googleSearchRes, olCoverExistsRes, bnQueryRes] = await Promise.allSettled([
+    searchSwiatCzytnikowByQuery(q),
     fetchWithTimeout(
       `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=ebook&limit=5&country=pl`,
       6000
@@ -1478,12 +1600,39 @@ async function enrichBookByTitleAuthor(title, author, isbn = '') {
       `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=4`,
       6000
     ).then((r) => (r.ok ? r.json() : null)),
-    olIsbnCoverUrl ? checkImageExists(olIsbnCoverUrl) : Promise.resolve(false)
+    olIsbnCoverUrl ? checkImageExists(olIsbnCoverUrl) : Promise.resolve(false),
+    needPolishMeta ? searchBibliotekaNarodowaByQuery(q) : Promise.resolve([])
   ]);
 
-  if (olCoverExistsRes.status === 'fulfilled' && olCoverExistsRes.value) {
+  // Okładki i opisy polskich wydań ze Świata Czytników mają najwyższy priorytet dla polskich książek
+  const scItems = scSearchRes.status === 'fulfilled' ? scSearchRes.value || [] : [];
+  for (const scItem of scItems) {
+    if (!result.coverUrl && scItem.coverUrl) {
+      result.coverUrl = scItem.coverUrl;
+      result.source = 'Świat Czytników (E-book)';
+    }
+    if (!result.description && scItem.description) {
+      result.description = scItem.description;
+      if (!result.source) result.source = 'Świat Czytników (E-book)';
+    }
+  }
+
+  if (!result.coverUrl && olCoverExistsRes.status === 'fulfilled' && olCoverExistsRes.value) {
     result.coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-    result.source = 'Open Library';
+    if (!result.source) result.source = 'Open Library';
+  }
+
+  // Jeśli szukaliśmy metadanych polskiego wydania w Bibliotece Narodowej (np. liczba stron i rok wydania dla e-booka)
+  const bnItems = bnQueryRes.status === 'fulfilled' ? bnQueryRes.value || [] : [];
+  for (const bnItem of bnItems) {
+    if (!result.pages && bnItem.pages) result.pages = bnItem.pages;
+    if (!result.publishedYear && bnItem.publishedYear) result.publishedYear = bnItem.publishedYear;
+    if (!result.publisher && bnItem.publisher) result.publisher = bnItem.publisher;
+    if (!result.category && bnItem.category) result.category = bnItem.category;
+    if (bnItem.pages || bnItem.publishedYear) {
+      if (!result.source) result.source = 'Biblioteka Narodowa';
+      break;
+    }
   }
 
   // Przeszukaj wyniki Google Books (jeśli brak limitu 429)
@@ -1503,6 +1652,12 @@ async function enrichBookByTitleAuthor(title, author, isbn = '') {
     if (!result.category && Array.isArray(info.categories) && info.categories[0]) {
       result.category = info.categories[0];
     }
+    if (!result.pages && info.pageCount) {
+      result.pages = info.pageCount;
+    }
+    if (!result.publishedYear && info.publishedDate) {
+      result.publishedYear = info.publishedDate.slice(0, 4);
+    }
   }
 
   // Przeszukaj wyniki Apple Books (niezawodne okładki HD 600x600 i opisy bez limitów 429!)
@@ -1521,6 +1676,9 @@ async function enrichBookByTitleAuthor(title, author, isbn = '') {
     const genres = (item.genres || []).filter((g) => g.toLowerCase() !== 'books');
     if (!result.category && genres[0]) {
       result.category = genres[0];
+    }
+    if (!result.publishedYear && item.releaseDate) {
+      result.publishedYear = item.releaseDate.slice(0, 4);
     }
   }
 
@@ -1788,7 +1946,7 @@ async function handleIsbnLookup() {
   btn.disabled = true;
   showLookupFeedback(
     'loading',
-    `Szukam książki o ISBN ${clean} (Biblioteka Narodowa, Apple Books, OpenLibrary, Google Books)...`
+    `Szukam książki o ISBN ${clean} (Biblioteka Narodowa, Świat Czytników E-booki, Apple Books, OpenLibrary, Google Books)...`
   );
 
   try {
@@ -1923,6 +2081,60 @@ async function searchBibliotekaNarodowaByQuery(query) {
   return items;
 }
 
+async function searchSwiatCzytnikowByQuery(query) {
+  const items = [];
+  try {
+    const slug = query
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/%/g, '%25');
+    if (slug.length < 3) return items;
+
+    const targetUrl = `https://ebooki.swiatczytnikow.pl/szukaj/${encodeURIComponent(slug)}`;
+    const jinaUrl = `https://r.jina.ai/${targetUrl}`;
+    const res = await fetchWithTimeout(jinaUrl, 7500, {
+      headers: { Accept: 'text/plain' }
+    });
+    if (!res.ok) return items;
+    const text = await res.text();
+
+    const pattern =
+      /\[!\[Image\s+\d+:\s*Okładka książki:\s*([^\]]+)\]\((https:\/\/static\.swiatczytnikow\.pl\/img\/covers\/[^)\s]+)\)\]\(https:\/\/ebooki\.swiatczytnikow\.pl\/ebook\/(\d{10,13}),([^.)]+)\.html\)\s*([^\n[]*)/gi;
+
+    let match;
+    while ((match = pattern.exec(text)) !== null && items.length < 5) {
+      const title = match[1].trim();
+      const coverUrl = match[2].replace('/small/', '/big/');
+      const isbn = match[3].trim();
+      const urlSlug = match[4] || '';
+      const authorSlug = urlSlug.split('--')[0] || '';
+      const author = authorSlug
+        ? authorSlug
+            .split('-')
+            .filter(Boolean)
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ')
+        : 'Autor nieznany';
+      const snippet = (match[5] || '').trim();
+
+      items.push({
+        isbn,
+        title,
+        author,
+        publisher: '',
+        publishedYear: '',
+        pages: '',
+        category: '',
+        description: snippet,
+        coverUrl,
+        isEbookHint: true,
+        source: 'Świat Czytników (E-book)'
+      });
+    }
+  } catch (e) {}
+  return items;
+}
+
 async function handleSearchByTitle() {
   const inputEl = document.getElementById('titleQueryInput');
   const query = inputEl.value.trim();
@@ -1933,13 +2145,22 @@ async function handleSearchByTitle() {
   inputEl.blur();
   resultsEl.scrollTop = 0;
 
+  // Jeśli użytkownik wkleił numer ISBN (np. z myślnikami 978-83-670-2382-5) w polu wyszukiwania po tytule — pobierz od razu po ISBN!
+  const cleanPossibleIsbn = normalizeIsbn(query);
+  if ((cleanPossibleIsbn.length === 13 || cleanPossibleIsbn.length === 10) && !/[a-zA-WY-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,}/.test(query)) {
+    document.getElementById('isbnInput').value = cleanPossibleIsbn;
+    await handleIsbnLookup();
+    return;
+  }
+
   resultsEl.innerHTML = `<div class="title-search-status" style="color:#3b82f6;">Szukam „${escapeHtml(
     query
-  )}” (Biblioteka Narodowa, Apple Books, OpenLibrary, Google Books)...</div>`;
+  )}” (Biblioteka Narodowa, Świat Czytników E-booki, Apple Books, OpenLibrary, Google Books)...</div>`;
 
   try {
-    const [bnRes, applePlRes, openLibRes, googleRes] = await Promise.allSettled([
+    const [bnRes, scRes, applePlRes, openLibRes, googleRes] = await Promise.allSettled([
       searchBibliotekaNarodowaByQuery(query),
+      searchSwiatCzytnikowByQuery(query),
       fetchWithTimeout(
         `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=ebook&limit=6&country=pl`,
         6500
@@ -1959,6 +2180,11 @@ async function handleSearchByTitle() {
     // 1. Wyniki z Biblioteki Narodowej (polskie wydania z ISBN, wydawnictwem i liczbą stron)
     if (bnRes.status === 'fulfilled' && Array.isArray(bnRes.value)) {
       candidates.push(...bnRes.value);
+    }
+
+    // 1b. Wyniki polskich e-booków ze Świata Czytników (z polskim ISBN e-booka i okładką HD)
+    if (scRes.status === 'fulfilled' && Array.isArray(scRes.value)) {
+      candidates.push(...scRes.value);
     }
 
     // 2. Wyniki z Google Books (jeśli dostępne)
@@ -2035,12 +2261,20 @@ async function handleSearchByTitle() {
       return;
     }
 
-    // Wzbogać rekordy z Biblioteki Narodowej o okładkę i opis z Apple Books / OpenLibrary / Google Books z tej samej listy
+    // Wzbogać wzajemnie rekordy z Biblioteki Narodowej i Świata Czytników o okładkę HD, opis, wydawnictwo, rok i liczbę stron
     const firstWithCover = candidates.find((c) => c.coverUrl)?.coverUrl || '';
     const firstWithDesc = candidates.find((c) => c.description)?.description || '';
+    const firstWithPub = candidates.find((c) => c.publisher)?.publisher || '';
+    const firstWithYear = candidates.find((c) => c.publishedYear)?.publishedYear || '';
+    const firstWithPages = candidates.find((c) => c.pages)?.pages || '';
+    const firstWithCat = candidates.find((c) => c.category)?.category || '';
     candidates.forEach((c) => {
       if (!c.coverUrl && firstWithCover) c.coverUrl = firstWithCover;
       if (!c.description && firstWithDesc) c.description = firstWithDesc;
+      if (!c.publisher && firstWithPub) c.publisher = firstWithPub;
+      if (!c.publishedYear && firstWithYear) c.publishedYear = firstWithYear;
+      if (!c.pages && firstWithPages) c.pages = firstWithPages;
+      if (!c.category && firstWithCat) c.category = firstWithCat;
     });
 
     // Usuń zduplikowane pozycje i wyświetl do 8 najlepszych wydań
@@ -2096,6 +2330,7 @@ async function handleSearchByTitle() {
           highlightCategoryChip(bookItem.category);
         }
         if (bookItem.description) document.getElementById('descriptionInput').value = bookItem.description;
+        if (bookItem.isEbookHint) setFormFormat('ebook');
         if (bookItem.coverUrl) {
           document.getElementById('coverUrlInput').value = bookItem.coverUrl;
           updateFormCoverPreview(bookItem.coverUrl);
@@ -2608,7 +2843,10 @@ function bindEvents() {
       const store = chip.dataset.store;
       document.getElementById('purchasePlaceInput').value = store;
       highlightStoreChip(store);
-      if (['publio', 'woblink', 'legimi', 'ebookpoint'].includes(store.toLowerCase()) && uiState.formFormat === 'paper') {
+      if (
+        ['upolujebooka', 'publio', 'woblink', 'legimi', 'ebookpoint'].includes(store.toLowerCase()) &&
+        uiState.formFormat === 'paper'
+      ) {
         setFormFormat('ebook');
       }
     });
