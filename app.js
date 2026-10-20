@@ -178,7 +178,10 @@ function applySettingsToUI() {
   document.getElementById('themeSelect').value = themeMode;
   applyThemeMode(themeMode);
 
-  document.getElementById('libraryTitle').textContent = s.libraryName || 'Moja Prywatna Biblioteczka';
+  const libName = s.libraryName || 'Moja Prywatna Biblioteczka';
+  document.getElementById('libraryTitle').textContent = libName;
+  const libInput = document.getElementById('libraryNameInput');
+  if (libInput) libInput.value = libName;
 
   document.getElementById('viewCoversBtn').classList.toggle('active', uiState.viewMode === 'covers');
   document.getElementById('viewSpinesBtn').classList.toggle('active', uiState.viewMode === 'spines');
@@ -244,7 +247,7 @@ function closeModalById(modalId) {
     if (card) card.style.transform = '';
     backdrop.classList.add('hidden');
   }
-  const anyOpen = ['detailModal', 'bookFormModal', 'syncModal'].some(
+  const anyOpen = ['settingsModal', 'detailModal', 'bookFormModal', 'syncModal'].some(
     (id) => !document.getElementById(id).classList.contains('hidden')
   );
   if (!anyOpen) {
@@ -356,9 +359,49 @@ function renderAll() {
   renderHeaderStats();
   renderCategoryFilterOptions();
   renderStoreFilterOptions();
+  syncAllFilterSelectDisplays();
+  updateActiveFilterBadge();
   renderSampleBanner();
   renderBookshelf();
   updateJsonPreviewArea();
+}
+
+function syncSelectDisplayLabel(selectId, displayId) {
+  const select = document.getElementById(selectId);
+  const display = document.getElementById(displayId);
+  if (!select || !display) return;
+  const selectedOpt = select.options[select.selectedIndex];
+  display.textContent = selectedOpt ? selectedOpt.textContent : '';
+}
+
+function syncAllFilterSelectDisplays() {
+  syncSelectDisplayLabel('filterStatus', 'filterStatusDisplay');
+  syncSelectDisplayLabel('filterCategory', 'filterCategoryDisplay');
+  syncSelectDisplayLabel('filterStore', 'filterStoreDisplay');
+  syncSelectDisplayLabel('sortSelect', 'sortSelectDisplay');
+}
+
+function updateActiveFilterBadge() {
+  let count = 0;
+  if (uiState.formatFilter !== 'all') count++;
+  if (uiState.statusFilter !== 'all') count++;
+  if (uiState.categoryFilter !== 'all') count++;
+  if (uiState.storeFilter !== 'all') count++;
+
+  const badge = document.getElementById('activeFilterCount');
+  const toggleBtn = document.getElementById('btnToggleFilters');
+  const resetBtn = document.getElementById('btnResetFilters');
+
+  if (badge) {
+    badge.textContent = String(count);
+    badge.classList.toggle('hidden', count === 0);
+  }
+  if (toggleBtn) {
+    toggleBtn.classList.toggle('has-active', count > 0);
+  }
+  if (resetBtn) {
+    resetBtn.classList.toggle('hidden', count === 0 && uiState.sortBy === 'added-desc');
+  }
 }
 
 function renderHeaderStats() {
@@ -1587,13 +1630,65 @@ function bindEvents() {
     openModalById('syncModal');
   });
 
-  document.getElementById('libraryTitle').addEventListener('click', () => {
-    const nextName = prompt('Podaj własną nazwę swojej biblioteczki:', appData.settings.libraryName);
-    if (nextName && nextName.trim()) {
-      appData.settings.libraryName = nextName.trim();
+  // Otwieranie i zamykanie modalu Ustawień Wyglądu (przycisk zębatki SVG lub kliknięcie w tytuł)
+  const openSettings = () => {
+    const libInput = document.getElementById('libraryNameInput');
+    if (libInput) {
+      libInput.value = appData.settings.libraryName || 'Moja Prywatna Biblioteczka';
+    }
+    openModalById('settingsModal');
+  };
+  document.getElementById('btnOpenSettings').addEventListener('click', openSettings);
+  document.getElementById('libraryTitle').addEventListener('click', openSettings);
+
+  const saveAndCloseSettings = () => {
+    const libInput = document.getElementById('libraryNameInput');
+    if (libInput && libInput.value.trim()) {
+      appData.settings.libraryName = libInput.value.trim();
       document.getElementById('libraryTitle').textContent = appData.settings.libraryName;
       saveLocalData(true);
     }
+    closeModalById('settingsModal');
+  };
+  document.getElementById('btnCloseSettings').addEventListener('click', saveAndCloseSettings);
+  document.getElementById('btnDoneSettings').addEventListener('click', saveAndCloseSettings);
+
+  document.getElementById('libraryNameInput').addEventListener('input', (e) => {
+    const val = e.target.value.trim() || 'Moja Prywatna Biblioteczka';
+    appData.settings.libraryName = val;
+    document.getElementById('libraryTitle').textContent = val;
+  });
+
+  // Rozwijane / zwijane menu filtrów i sortowania (#btnToggleFilters -> #filtersDrawer)
+  const btnToggleFilters = document.getElementById('btnToggleFilters');
+  const filtersDrawer = document.getElementById('filtersDrawer');
+  btnToggleFilters.addEventListener('click', () => {
+    const isNowHidden = filtersDrawer.classList.toggle('hidden');
+    btnToggleFilters.classList.toggle('open', !isNowHidden);
+    btnToggleFilters.setAttribute('aria-expanded', String(!isNowHidden));
+  });
+
+  // Przycisk resetowania wszystkich filtrów
+  document.getElementById('btnResetFilters').addEventListener('click', () => {
+    uiState.formatFilter = 'all';
+    uiState.statusFilter = 'all';
+    uiState.categoryFilter = 'all';
+    uiState.storeFilter = 'all';
+    uiState.sortBy = 'added-desc';
+
+    document.getElementById('filterStatus').value = 'all';
+    document.getElementById('filterCategory').value = 'all';
+    document.getElementById('filterStore').value = 'all';
+    document.getElementById('sortSelect').value = 'added-desc';
+
+    document.querySelectorAll('.format-filter-group .seg-btn').forEach((b) =>
+      b.classList.toggle('active', b.dataset.formatFilter === 'all')
+    );
+
+    syncAllFilterSelectDisplays();
+    updateActiveFilterBadge();
+    renderBookshelf();
+    showToast('Wyczyszczono filtry');
   });
 
   // Wyszukiwarka
@@ -1618,25 +1713,34 @@ function bindEvents() {
       document.querySelectorAll('.format-filter-group .seg-btn').forEach((b) =>
         b.classList.toggle('active', b.dataset.formatFilter === uiState.formatFilter)
       );
+      updateActiveFilterBadge();
       renderBookshelf();
     });
   });
 
-  // Systemowe listy rozwijane: Status, Gatunek, Sklep, Sortowanie
+  // Systemowe listy rozwijane: Status, Gatunek, Sklep, Sortowanie (z synchronizacją etykiety "...")
   document.getElementById('filterStatus').addEventListener('change', (e) => {
     uiState.statusFilter = e.target.value;
+    syncSelectDisplayLabel('filterStatus', 'filterStatusDisplay');
+    updateActiveFilterBadge();
     renderBookshelf();
   });
   document.getElementById('filterCategory').addEventListener('change', (e) => {
     uiState.categoryFilter = e.target.value;
+    syncSelectDisplayLabel('filterCategory', 'filterCategoryDisplay');
+    updateActiveFilterBadge();
     renderBookshelf();
   });
   document.getElementById('filterStore').addEventListener('change', (e) => {
     uiState.storeFilter = e.target.value;
+    syncSelectDisplayLabel('filterStore', 'filterStoreDisplay');
+    updateActiveFilterBadge();
     renderBookshelf();
   });
   document.getElementById('sortSelect').addEventListener('change', (e) => {
     uiState.sortBy = e.target.value;
+    syncSelectDisplayLabel('sortSelect', 'sortSelectDisplay');
+    updateActiveFilterBadge();
     renderBookshelf();
   });
 
@@ -1663,7 +1767,7 @@ function bindEvents() {
     renderBookshelf();
   });
 
-  // Wybór koloru drewna półki
+  // Wybór koloru drewna półki (w oknie Ustawień)
   document.getElementById('woodSelect').addEventListener('change', (e) => {
     const wood = e.target.value;
     document.body.dataset.wood = wood;
@@ -1915,8 +2019,9 @@ function bindEvents() {
     showToast('Skopiowano zawartość JSON do schowka');
   });
 
-  ['detailModal', 'bookFormModal', 'syncModal'].forEach((id) => {
+  ['settingsModal', 'detailModal', 'bookFormModal', 'syncModal'].forEach((id) => {
     const backdrop = document.getElementById(id);
+    if (!backdrop) return;
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) {
         closeModalById(id);
@@ -1926,6 +2031,7 @@ function bindEvents() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      closeModalById('settingsModal');
       closeModalById('detailModal');
       closeModalById('bookFormModal');
       closeModalById('syncModal');
