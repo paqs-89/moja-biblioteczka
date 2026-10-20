@@ -1,13 +1,35 @@
 {
-  "version": 2,
-  "updatedAt": "2026-10-20T12:55:00.000Z",
+  "version": 1,
+  "updatedAt": "2026-10-20T11:06:02.508Z",
   "settings": {
     "libraryName": "Moja Prywatna Biblioteczka",
     "shelfWood": "oak",
     "defaultView": "covers",
-    "groupByStatus": false
+    "groupByStatus": true
   },
   "books": [
+    {
+      "id": "book-1792493414844-gzyy",
+      "isbn": "9788381693080",
+      "title": "Red, White & Royal Blue",
+      "author": "Casey McQuiston",
+      "publisher": "Proszynski",
+      "publishedYear": "2020",
+      "pages": 476,
+      "category": "Fiction, gay",
+      "status": "unread",
+      "rating": 0,
+      "purchasePlace": "",
+      "purchasePrice": "",
+      "purchaseDate": "2026-10-20",
+      "coverUrl": "https://covers.openlibrary.org/b/id/11274202-L.jpg",
+      "spineColor": "#4a1c2a",
+      "notes": "",
+      "description": "",
+      "updatedAt": "2026-10-20T10:50:14.843Z",
+      "addedAt": "2026-10-20T10:50:14.843Z",
+      "format": "paper"
+    },
     {
       "id": "sample-1",
       "isbn": "9788375780635",
@@ -17,7 +39,6 @@
       "publishedYear": "2014",
       "pages": 332,
       "category": "Fantasy",
-      "format": "paper",
       "status": "read",
       "rating": 5,
       "purchasePlace": "Empik",
@@ -29,7 +50,8 @@
       "notes": "Klasyka polskiej fantastyki. Opowiadanie o strzydze i Mniejsze Zło to absolutne arcydzieła.",
       "isSample": true,
       "addedAt": "2025-11-14T18:20:00.000Z",
-      "updatedAt": "2025-11-20T21:00:00.000Z"
+      "updatedAt": "2025-11-20T21:00:00.000Z",
+      "format": "paper"
     },
     {
       "id": "sample-2",
@@ -40,19 +62,19 @@
       "publishedYear": "2023",
       "pages": 248,
       "category": "Sci-Fi",
-      "format": "ebook",
       "status": "read",
       "rating": 5,
-      "purchasePlace": "Publio",
-      "purchasePrice": "24.90",
+      "purchasePlace": "Allegro",
+      "purchasePrice": "29.50",
       "purchaseDate": "2026-01-10",
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9780156027601-L.jpg",
       "spineColor": "#1b3a4b",
       "description": "Najsłynniejsza powieść Stanisława Lema, zaliczana do klasyki światowej literatury science fiction. Opowieść o kontakcie człowieka z obcą, niepojętą inteligencją.",
-      "notes": "Wersja EPUB na czytnik. Niesamowity klimat stacji badawczej.",
+      "notes": "Kupiona w twardej oprawie na Allegro. Niesamowity klimat stacji badawczej.",
       "isSample": true,
       "addedAt": "2026-01-10T10:15:00.000Z",
-      "updatedAt": "2026-01-18T19:40:00.000Z"
+      "updatedAt": "2026-01-18T19:40:00.000Z",
+      "format": "ebook"
     },
     {
       "id": "sample-3",
@@ -63,7 +85,6 @@
       "publishedYear": "2022",
       "pages": 672,
       "category": "Sci-Fi",
-      "format": "paper",
       "status": "reading",
       "rating": 5,
       "purchasePlace": "Bonito",
@@ -72,10 +93,11 @@
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
       "spineColor": "#7c3f1c",
       "description": "Arrakis, zwana Diuną, to jedyne we wszechświecie źródło melanżu – substancji przedłużającej życie i umożliwiającej podróże kosmiczne.",
-      "notes": "W połowie lektury, wydanie w twardej oprawie z grafikami Siudmaka.",
+      "notes": "W połowie lektury, wydanie z grafikami Siudmaka.",
       "isSample": true,
       "addedAt": "2026-08-05T14:30:00.000Z",
-      "updatedAt": "2026-09-01T12:00:00.000Z"
+      "updatedAt": "2026-09-01T12:00:00.000Z",
+      "format": "paper"
     },
     {
       "id": "sample-4",
@@ -86,19 +108,19 @@
       "publishedYear": "2019",
       "pages": 272,
       "category": "Rozwój osobisty",
-      "format": "ebook",
       "status": "unread",
       "rating": 0,
-      "purchasePlace": "Woblink",
-      "purchasePrice": "29.00",
+      "purchasePlace": "Świat Książki",
+      "purchasePrice": "32.00",
       "purchaseDate": "2026-09-22",
       "coverUrl": "https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg",
       "spineColor": "#1e3a2f",
       "description": "Drobne zmiany, niezwykłe rezultaty. Praktyczny przewodnik po budowaniu dobrych nawyków i pozbywaniu się złych.",
-      "notes": "Kupiona w promocji na czytnik.",
+      "notes": "Czeka w kolejce na jesienne wieczory.",
       "isSample": true,
       "addedAt": "2026-09-22T16:10:00.000Z",
-      "updatedAt": "2026-09-22T16:10:00.000Z"
+      "updatedAt": "2026-09-22T16:10:00.000Z",
+      "format": "ebook"
     },
     {
       "id": "sample-5",
@@ -109,7 +131,6 @@
       "publishedYear": "2021",
       "pages": 528,
       "category": "Powieść",
-      "format": "paper",
       "status": "read",
       "rating": 4,
       "purchasePlace": "Antykwariat",
@@ -121,7 +142,8 @@
       "notes": "Upolowana w lokalnym antykwariacie w świetnym stanie.",
       "isSample": true,
       "addedAt": "2025-06-12T11:00:00.000Z",
-      "updatedAt": "2026-07-02T20:15:00.000Z"
+      "updatedAt": "2026-10-20T10:47:08.746Z",
+      "format": "paper"
     }
   ]
 }
