@@ -510,6 +510,28 @@ svg {
   font-weight: 700;
 }
 
+.btn-quick-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  background: var(--accent-tint);
+  border: 1px dashed var(--accent-border);
+  color: var(--accent-gold);
+  padding: 0.48rem 0.65rem;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
+}
+
+.btn-quick-reset:hover {
+  background: var(--pill-hover);
+}
+
 /* Rozwijana szuflada filtrów i sortowania */
 .filters-drawer {
   display: flex;
@@ -1975,6 +1997,8 @@ body[data-theme="dark"] .badge-format.is-both {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .form-group {
@@ -1984,6 +2008,7 @@ body[data-theme="dark"] .badge-format.is-both {
   margin-bottom: 0.6rem;
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .form-group label {
@@ -1992,19 +2017,55 @@ body[data-theme="dark"] .badge-format.is-both {
   color: var(--text-muted);
 }
 
-.form-group input,
+.form-group input:not([type="checkbox"]):not([type="color"]),
 .form-group select,
 .form-group textarea {
+  display: block;
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  box-sizing: border-box;
   background: var(--input-bg);
   border: 1px solid var(--border-subtle);
-  border-radius: 9px;
-  padding: 0.5rem 0.72rem;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
   color: var(--text-main);
   font-family: inherit;
   font-size: 0.86rem;
+}
+
+/* Ujednolicenie wysokości i wyglądu wszystkich jednowierszowych pól (w tym <input type="date"> na iOS Safari) */
+.form-group input:not([type="checkbox"]):not([type="color"]),
+.form-group select {
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  line-height: 1.25;
+}
+
+.form-group input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0 0.75rem;
+  text-align: left;
+  overflow: hidden;
+}
+
+.form-group input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  padding: 0;
+  min-height: 1.25em;
+  display: inline-flex;
+  align-items: center;
 }
 
 .form-group input:focus,

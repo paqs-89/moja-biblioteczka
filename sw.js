@@ -1,4 +1,4 @@
-const CACHE_NAME = 'biblioteczka-pwa-v5';
+const CACHE_NAME = 'biblioteczka-pwa-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -39,11 +39,13 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Nigdy nie buforuj zapytań do GitHub API ani zewnętrznych katalogów ISBN
+  // Nigdy nie buforuj zapytań do GitHub API ani zewnętrznych katalogów książek
   if (
     url.hostname.includes('api.github.com') ||
     url.hostname.includes('googleapis.com') ||
     url.hostname.includes('data.bn.org.pl') ||
+    url.hostname.includes('itunes.apple.com') ||
+    url.hostname.includes('openlibrary.org') ||
     url.pathname.includes('/api/books')
   ) {
     return;
