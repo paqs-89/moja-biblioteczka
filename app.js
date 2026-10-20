@@ -1,11 +1,12 @@
 /**
- * MOJA PRYWATNA BIBLIOTECZKA — LOGIKA APLIKACJI PWA
+ * MOJA PRYWATNA BIBLIOTECZKA — LOGIKA APLIKACJI PWA (IOS / MACOS SAFARI)
  * - Wizualna półka 3D (okładki przodem + grzbiety książek)
- * - Obsługa książek papierowych oraz e-booków
- * - System czystych ikon SVG (zero emotek)
- * - Pobieranie danych i okładek po ISBN (Google Books + Biblioteka Narodowa + OpenLibrary)
- * - Skaner kodów kreskowych ISBN aparatem (html5-qrcode)
- * - Baza danych JSON z automatyczną synchronizacją z darmowym kontem GitHub
+ * - Obsługa wariantów: Książka papierowa, E-book oraz Obie wersje (Papier + E-book)
+ * - Filtrowanie po statusie, gatunku, sklepie i nośniku (systemowe kontrolki iOS)
+ * - Gest ściągania dolnej karty w dół (Swipe-to-dismiss iOS Sheet) + blokada tła
+ * - Motywy ciemne i jasne (Ciemny gabinet, Jasny pergamin Apple Books, Jasny iOS, Auto)
+ * - Pobieranie po ISBN (Google Books + Biblioteka Narodowa + OpenLibrary) + skaner kodów
+ * - Synchronizacja JSON z darmowym kontem GitHub
  */
 
 const STORAGE_KEY_DATA = 'biblioteczka_data_v1';
@@ -24,6 +25,7 @@ const SVG_ICONS = {
   wishlist: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
   paper: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>`,
   ebook: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
+  both: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H14v15H6.5a2.5 2.5 0 0 0 0 5H14"/><rect x="12" y="6" width="9" height="15" rx="1.5"/></svg>`,
   store: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
   starFilled: (size = 12) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
   starOutline: (size = 12) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
@@ -38,7 +40,8 @@ const STATUS_META = {
 
 const FORMAT_META = {
   paper: { label: 'Książka papierowa', short: 'Papier', svg: SVG_ICONS.paper, css: 'is-paper' },
-  ebook: { label: 'E-book', short: 'E-book', svg: SVG_ICONS.ebook, css: 'is-ebook' }
+  ebook: { label: 'E-book', short: 'E-book', svg: SVG_ICONS.ebook, css: 'is-ebook' },
+  both:  { label: 'Papier + E-book', short: 'Papier + E-book', svg: SVG_ICONS.both, css: 'is-both' }
 };
 
 // Stan główny aplikacji
@@ -48,6 +51,7 @@ let appData = {
   settings: {
     libraryName: 'Moja Prywatna Biblioteczka',
     shelfWood: 'oak',
+    appTheme: 'dark', // 'dark' | 'sepia' | 'light' | 'auto'
     defaultView: 'covers',
     groupByStatus: false
   },
@@ -59,6 +63,7 @@ let uiState = {
   search: '',
   statusFilter: 'all',
   formatFilter: 'all', // 'all' | 'paper' | 'ebook'
+  categoryFilter: 'all',
   storeFilter: 'all',
   sortBy: 'added-desc',
   viewMode: 'covers', // 'covers' | 'spines'
@@ -70,8 +75,8 @@ let uiState = {
 
 // Konfiguracja GitHub API (przechowywana wyłącznie lokalnie)
 let ghConfig = {
-  owner: '',
-  repo: '',
+  owner: 'paqs-89',
+  repo: 'moja-biblioteczka',
   branch: 'main',
   path: 'data/books.json',
   token: '',
@@ -91,6 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadGhConfig();
   await initializeData();
   bindEvents();
+  setupSwipeToDismissModals();
   setupResizeObserver();
   applySettingsToUI();
   renderAll();
@@ -115,7 +121,6 @@ async function initializeData() {
     }
   }
 
-  // Jeśli brak danych w localStorage, wczytaj początkowy plik ./data/books.json
   if (!appData.books || appData.books.length === 0) {
     try {
       const res = await fetch('./data/books.json', { cache: 'no-store' });
@@ -131,21 +136,25 @@ async function initializeData() {
     }
   }
 
-  // Migracja: upewnij się, że każda książka posiada pole format ('paper' lub 'ebook')
+  if (!appData.settings) {
+    appData.settings = {
+      libraryName: 'Moja Prywatna Biblioteczka',
+      shelfWood: 'oak',
+      appTheme: 'dark',
+      defaultView: 'covers',
+      groupByStatus: false
+    };
+  }
+
   let migrated = false;
   (appData.books || []).forEach((b) => {
     if (!b.format) {
-      if (b.id === 'sample-2' || b.id === 'sample-4') {
-        b.format = 'ebook';
-      } else {
-        b.format = 'paper';
-      }
+      b.format = b.id === 'sample-2' || b.id === 'sample-4' ? 'ebook' : 'paper';
       migrated = true;
     }
   });
   if (migrated) saveLocalData(false);
 
-  // Jeśli skonfigurowano GitHub, spróbuj pobrać najnowszy stan z repozytorium przy starcie
   if (ghConfig.owner && ghConfig.repo && ghConfig.token) {
     updateSyncStatusUI('syncing', 'Sprawdzam GitHub...');
     pullFromGitHub(true).catch(() => {
@@ -161,13 +170,35 @@ function applySettingsToUI() {
   uiState.viewMode = s.defaultView || 'covers';
   uiState.groupByStatus = Boolean(s.groupByStatus);
 
-  document.body.dataset.wood = s.shelfWood || 'oak';
-  document.getElementById('woodSelect').value = s.shelfWood || 'oak';
+  const wood = s.shelfWood || 'oak';
+  document.body.dataset.wood = wood;
+  document.getElementById('woodSelect').value = wood;
+
+  const themeMode = s.appTheme || 'dark';
+  document.getElementById('themeSelect').value = themeMode;
+  applyThemeMode(themeMode);
+
   document.getElementById('libraryTitle').textContent = s.libraryName || 'Moja Prywatna Biblioteczka';
 
   document.getElementById('viewCoversBtn').classList.toggle('active', uiState.viewMode === 'covers');
   document.getElementById('viewSpinesBtn').classList.toggle('active', uiState.viewMode === 'spines');
   document.getElementById('btnToggleGroupStatus').classList.toggle('active', uiState.groupByStatus);
+}
+
+function applyThemeMode(mode) {
+  let effective = mode;
+  if (mode === 'auto') {
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    effective = prefersLight ? 'sepia' : 'dark';
+  }
+  document.body.dataset.theme = effective;
+
+  const metaTheme = document.getElementById('metaThemeColor');
+  if (metaTheme) {
+    if (effective === 'sepia') metaTheme.content = '#f4ede1';
+    else if (effective === 'light') metaTheme.content = '#f2f2f7';
+    else metaTheme.content = '#1b120c';
+  }
 }
 
 function saveLocalData(triggerGitHubSync = true) {
@@ -185,11 +216,145 @@ function saveLocalData(triggerGitHubSync = true) {
 }
 
 /* ==========================================================================
-   RENDEROWANIE CAŁEGO WIDOKU, STATYSTYK I DREWNIANYCH PÓŁEK
+   ZARZĄDZANIE MODALMAMI IOS (BLOKADA PRZEWIJANIA TŁA + SWIPE-TO-DISMISS)
+   ========================================================================== */
+
+function openModalById(modalId) {
+  const backdrop = document.getElementById(modalId);
+  if (!backdrop) return;
+  const card = backdrop.querySelector('.modal-card');
+  if (card) {
+    card.style.transform = '';
+    card.scrollTop = 0;
+  }
+  backdrop.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+}
+
+function closeModalById(modalId) {
+  if (modalId === 'bookFormModal') {
+    stopCameraScanner();
+  }
+  if (modalId === 'detailModal') {
+    uiState.activeBookId = null;
+  }
+  const backdrop = document.getElementById(modalId);
+  if (backdrop) {
+    const card = backdrop.querySelector('.modal-card');
+    if (card) card.style.transform = '';
+    backdrop.classList.add('hidden');
+  }
+  const anyOpen = ['detailModal', 'bookFormModal', 'syncModal'].some(
+    (id) => !document.getElementById(id).classList.contains('hidden')
+  );
+  if (!anyOpen) {
+    document.body.classList.remove('modal-open');
+  }
+}
+
+function setupSwipeToDismissModals() {
+  // Blokada przewijania strony pod spodem przy dotknięciu tła modala na iOS Safari
+  document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+    backdrop.addEventListener(
+      'touchmove',
+      (e) => {
+        if (e.target === backdrop) {
+          e.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+  });
+
+  // Obsługa gestu ściągnięcia karty w dół (Swipe-to-dismiss) na każdym .modal-card
+  document.querySelectorAll('.modal-card').forEach((card) => {
+    const modalId = card.dataset.dismissTarget;
+    const handleArea = card.querySelector('[data-swipe-handle]');
+
+    let startY = 0;
+    let currentDeltaY = 0;
+    let isDraggingSheet = false;
+    let startedOnHandle = false;
+
+    if (handleArea) {
+      handleArea.addEventListener('click', (e) => {
+        if (e.target.closest('.modal-close')) return;
+        if (Math.abs(currentDeltaY) < 6 && e.target.classList.contains('modal-drag-handle')) {
+          closeModalById(modalId);
+        }
+      });
+    }
+
+    card.addEventListener(
+      'touchstart',
+      (e) => {
+        if (e.touches.length !== 1) return;
+        const target = e.target;
+        startedOnHandle = Boolean(target.closest('[data-swipe-handle]'));
+
+        // Pozwól na ściągnięcie karty w dół, jeśli użytkownik ciągnie za górny uchwyt LUB jest na samej górze przewinięcia karty
+        if (startedOnHandle || (card.scrollTop <= 0 && !target.closest('input, textarea, select, button'))) {
+          startY = e.touches[0].clientY;
+          currentDeltaY = 0;
+          isDraggingSheet = true;
+        } else {
+          isDraggingSheet = false;
+        }
+      },
+      { passive: true }
+    );
+
+    card.addEventListener(
+      'touchmove',
+      (e) => {
+        if (!isDraggingSheet) return;
+        const touchY = e.touches[0].clientY;
+        const deltaY = touchY - startY;
+
+        if (deltaY > 0 && (startedOnHandle || card.scrollTop <= 0)) {
+          currentDeltaY = deltaY;
+          card.style.transition = 'none';
+          card.style.transform = `translateY(${deltaY}px)`;
+          if (e.cancelable) e.preventDefault();
+        } else if (deltaY < 0 && !startedOnHandle) {
+          // Użytkownik przewija zawartość karty w dół (czyta dalej) — oddaj pełną kontrolę natywnemu scrollowi!
+          isDraggingSheet = false;
+          currentDeltaY = 0;
+          card.style.transition = '';
+          card.style.transform = '';
+        }
+      },
+      { passive: false }
+    );
+
+    const finishDrag = () => {
+      if (!isDraggingSheet) return;
+      isDraggingSheet = false;
+      card.style.transition = 'transform 0.26s cubic-bezier(0.32, 0.72, 0, 1)';
+
+      if (currentDeltaY > 85) {
+        card.style.transform = 'translateY(105%)';
+        setTimeout(() => {
+          closeModalById(modalId);
+        }, 210);
+      } else {
+        card.style.transform = '';
+      }
+      currentDeltaY = 0;
+    };
+
+    card.addEventListener('touchend', finishDrag, { passive: true });
+    card.addEventListener('touchcancel', finishDrag, { passive: true });
+  });
+}
+
+/* ==========================================================================
+   RENDEROWANIE CAŁEGO WIDOKU, STATYSTYK, FILTRÓW I DREWNIANYCH PÓŁEK
    ========================================================================== */
 
 function renderAll() {
   renderHeaderStats();
+  renderCategoryFilterOptions();
   renderStoreFilterOptions();
   renderSampleBanner();
   renderBookshelf();
@@ -199,33 +364,75 @@ function renderAll() {
 function renderHeaderStats() {
   const books = appData.books || [];
   const total = books.length;
-  const paperCount = books.filter((b) => (b.format || 'paper') === 'paper').length;
-  const ebookCount = books.filter((b) => b.format === 'ebook').length;
+  const paperCount = books.filter((b) => !b.format || b.format === 'paper' || b.format === 'both').length;
+  const ebookCount = books.filter((b) => b.format === 'ebook' || b.format === 'both').length;
   const readCount = books.filter((b) => b.status === 'read').length;
 
   document.getElementById('statTotal').textContent = total;
+  document.getElementById('statTotalWord').textContent = pluralizeTom(total);
   document.getElementById('statPaper').textContent = paperCount;
   document.getElementById('statEbook').textContent = ebookCount;
   document.getElementById('statRead').textContent = readCount;
 }
 
-function renderStoreFilterOptions() {
-  const select = document.getElementById('filterStore');
-  const currentVal = uiState.storeFilter;
-  const stores = new Set();
+function renderCategoryFilterOptions() {
+  const select = document.getElementById('filterCategory');
+  const currentVal = uiState.categoryFilter;
+  const categoryCounts = new Map();
 
   (appData.books || []).forEach((b) => {
-    if (b.purchasePlace && b.purchasePlace.trim()) {
-      stores.add(b.purchasePlace.trim());
+    const rawCat = (b.category || '').trim();
+    if (rawCat) {
+      categoryCounts.set(rawCat, (categoryCounts.get(rawCat) || 0) + 1);
     }
   });
 
-  const sortedStores = Array.from(stores).sort((a, b) => a.localeCompare(b, 'pl'));
+  const sortedCategories = Array.from(categoryCounts.keys()).sort((a, b) => a.localeCompare(b, 'pl'));
+  select.innerHTML = `<option value="all">Wszystkie gatunki (${sortedCategories.length})</option>`;
+  sortedCategories.forEach((cat) => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = `${cat} (${categoryCounts.get(cat)})`;
+    select.appendChild(opt);
+  });
+
+  if (sortedCategories.includes(currentVal)) {
+    select.value = currentVal;
+  } else {
+    uiState.categoryFilter = 'all';
+    select.value = 'all';
+  }
+
+  // Zaktualizuj datalist podpowiedzi gatunków w formularzu
+  const datalist = document.getElementById('categorySuggestions');
+  if (datalist) {
+    const defaultCats = [
+      'Fantasy', 'Sci-Fi', 'Kryminał / Thriller', 'Powieść', 'Obyczajowa / Romans',
+      'Reportaż / Literatura faktu', 'Biografia / Historia', 'Rozwój osobisty', 'Psychologia', 'Biznes / Finanse'
+    ];
+    const allCats = Array.from(new Set([...defaultCats, ...sortedCategories]));
+    datalist.innerHTML = allCats.map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
+  }
+}
+
+function renderStoreFilterOptions() {
+  const select = document.getElementById('filterStore');
+  const currentVal = uiState.storeFilter;
+  const storeCounts = new Map();
+
+  (appData.books || []).forEach((b) => {
+    const rawStore = (b.purchasePlace || '').trim();
+    if (rawStore) {
+      storeCounts.set(rawStore, (storeCounts.get(rawStore) || 0) + 1);
+    }
+  });
+
+  const sortedStores = Array.from(storeCounts.keys()).sort((a, b) => a.localeCompare(b, 'pl'));
   select.innerHTML = `<option value="all">Wszystkie sklepy (${sortedStores.length})</option>`;
   sortedStores.forEach((store) => {
     const opt = document.createElement('option');
     opt.value = store;
-    opt.textContent = store;
+    opt.textContent = `${store} (${storeCounts.get(store)})`;
     select.appendChild(opt);
   });
 
@@ -236,7 +443,6 @@ function renderStoreFilterOptions() {
     select.value = 'all';
   }
 
-  // Uzupełnij też datalist w formularzu
   const datalist = document.getElementById('storeSuggestions');
   const defaultShops = [
     'Empik', 'Allegro', 'Bonito', 'Świat Książki', 'TaniaKsiazka.pl',
@@ -257,10 +463,16 @@ function getFilteredAndSortedBooks() {
 
   const filtered = (appData.books || []).filter((book) => {
     const bookFormat = book.format || 'paper';
-    if (uiState.formatFilter !== 'all' && bookFormat !== uiState.formatFilter) {
+    if (uiState.formatFilter === 'paper' && bookFormat !== 'paper' && bookFormat !== 'both') {
+      return false;
+    }
+    if (uiState.formatFilter === 'ebook' && bookFormat !== 'ebook' && bookFormat !== 'both') {
       return false;
     }
     if (uiState.statusFilter !== 'all' && book.status !== uiState.statusFilter) {
+      return false;
+    }
+    if (uiState.categoryFilter !== 'all' && (book.category || '').trim() !== uiState.categoryFilter) {
       return false;
     }
     if (uiState.storeFilter !== 'all' && (book.purchasePlace || '').trim() !== uiState.storeFilter) {
@@ -312,7 +524,6 @@ function calculateBooksPerShelfRow() {
     return Math.max(5, Math.floor(usable / avgSpineWidth));
   }
 
-  // Widok okładek 3D (na iPhonie 104px karta + 14px odstęp = 3 książki w rzędzie)
   const cardWidth = isMobile ? 104 : 136;
   const gap = isMobile ? 14 : 24;
   const padding = isMobile ? 24 : 44;
@@ -425,7 +636,7 @@ function createBookCoverElement(book) {
   el.setAttribute('aria-label', `${book.title} — ${book.author}`);
 
   const statusInfo = STATUS_META[book.status] || STATUS_META.unread;
-  const formatKey = book.format === 'ebook' ? 'ebook' : 'paper';
+  const formatKey = FORMAT_META[book.format] ? book.format : 'paper';
   const formatInfo = FORMAT_META[formatKey];
   const rating = Number(book.rating) || 0;
   const spineBg = book.spineColor || pickSpineColor(book.id || book.title);
@@ -501,7 +712,7 @@ function createBookSpineElement(book) {
   const spineHeight = Math.min(218, Math.max(192, 198 + ((book.title || '').length % 18)));
   const spineBg = book.spineColor || pickSpineColor(book.id || book.title);
   const statusInfo = STATUS_META[book.status] || STATUS_META.unread;
-  const formatKey = book.format === 'ebook' ? 'ebook' : 'paper';
+  const formatKey = FORMAT_META[book.format] ? book.format : 'paper';
   const formatInfo = FORMAT_META[formatKey];
   const rating = Number(book.rating) || 0;
 
@@ -525,7 +736,7 @@ function createBookSpineElement(book) {
       <div class="hover-title">${escapeHtml(book.title)}</div>
       <div class="hover-meta">
         ${formatInfo.short}
-        ${ book.purchasePlace ? ` • ${escapeHtml(book.purchasePlace)}` : '' }
+        ${book.purchasePlace ? ` • ${escapeHtml(book.purchasePlace)}` : ''}
       </div>
     </div>
   `;
@@ -536,13 +747,40 @@ function createBookSpineElement(book) {
 
 /* ==========================================================================
    SERWIS POBIERANIA DANYCH I OKŁADKI PO NUMERZE ISBN
-   (Google Books + Biblioteka Narodowa + OpenLibrary)
    ========================================================================== */
 
 function normalizeIsbn(raw) {
   return String(raw || '')
     .replace(/[^0-9Xx]/g, '')
     .toUpperCase();
+}
+
+function translateGenreToPolish(rawGenre) {
+  if (!rawGenre) return '';
+  const map = {
+    'fiction': 'Powieść',
+    'juvenile fiction': 'Literatura młodzieżowa',
+    'young adult fiction': 'Young Adult',
+    'science fiction': 'Sci-Fi',
+    'fantasy': 'Fantasy',
+    'thrillers': 'Kryminał / Thriller',
+    'mystery & detective': 'Kryminał',
+    'romance': 'Obyczajowa / Romans',
+    'biography & autobiography': 'Biografia',
+    'history': 'Historia',
+    'self-help': 'Rozwój osobisty',
+    'psychology': 'Psychologia',
+    'business & economics': 'Biznes / Finanse',
+    'computers': 'Technologia / IT',
+    'philosophy': 'Filozofia',
+    'poetry': 'Poezja'
+  };
+  const lower = rawGenre.trim().toLowerCase();
+  if (map[lower]) return map[lower];
+  if (lower.startsWith('fiction')) {
+    return rawGenre.replace(/^Fiction/i, 'Powieść');
+  }
+  return rawGenre.trim();
 }
 
 async function fetchBookDetailsByIsbn(rawIsbn) {
@@ -565,6 +803,8 @@ async function fetchBookDetailsByIsbn(rawIsbn) {
     throw new Error(`Nie znaleziono książki o numerze ISBN ${isbn} w katalogach online. Możesz wyszukać ją po tytule poniżej.`);
   }
 
+  const rawCategory = pickBestString(bnData?.category, gData?.category, olData?.category);
+
   const merged = {
     isbn,
     title: pickBestString(gData?.title, bnData?.title, olData?.title),
@@ -572,7 +812,7 @@ async function fetchBookDetailsByIsbn(rawIsbn) {
     publisher: pickBestString(bnData?.publisher, gData?.publisher, olData?.publisher),
     publishedYear: pickBestString(bnData?.publishedYear, gData?.publishedYear, olData?.publishedYear),
     pages: gData?.pages || bnData?.pages || olData?.pages || '',
-    category: pickBestString(gData?.category, bnData?.category, olData?.category),
+    category: translateGenreToPolish(rawCategory),
     description: pickBestString(gData?.description, olData?.description, bnData?.description),
     coverUrl: pickBestString(gData?.coverUrl, olData?.coverUrl),
     isEbookHint: Boolean(bnData?.isEbookHint || gData?.isEbookHint),
@@ -767,7 +1007,7 @@ function openDetailModal(bookId) {
   }
 
   updateDetailFormatBadge(book.format || 'paper');
-  document.getElementById('detailCategory').textContent = book.category || 'Książka';
+  document.getElementById('detailCategory').textContent = book.category || 'Nieokreślony gatunek';
   document.getElementById('detailIsbnBadge').textContent = book.isbn ? `ISBN: ${book.isbn}` : 'Brak ISBN';
   document.getElementById('detailTitle').textContent = book.title || 'Bez tytułu';
   document.getElementById('detailAuthor').textContent = book.author || 'Nieznany autor';
@@ -786,7 +1026,6 @@ function openDetailModal(bookId) {
   if (book.publishedYear) pagesYear.push(`wyd. ${book.publishedYear}`);
   document.getElementById('detailPagesYear').textContent = pagesYear.length ? pagesYear.join(' • ') : '—';
 
-  // Notatki własne
   const notesBox = document.getElementById('detailNotesBox');
   if (book.notes && book.notes.trim()) {
     notesBox.classList.remove('hidden');
@@ -795,7 +1034,6 @@ function openDetailModal(bookId) {
     notesBox.classList.add('hidden');
   }
 
-  // Opis książki
   const descBox = document.getElementById('detailDescBox');
   if (book.description && book.description.trim()) {
     descBox.classList.remove('hidden');
@@ -804,7 +1042,6 @@ function openDetailModal(bookId) {
     descBox.classList.add('hidden');
   }
 
-  // Interaktywne gwiazdki SVG w modalu szczegółów
   renderInteractiveStars('detailStars', Number(book.rating) || 0, (newRating) => {
     book.rating = newRating;
     book.updatedAt = new Date().toISOString();
@@ -815,8 +1052,8 @@ function openDetailModal(bookId) {
   });
   updateDetailRatingLabel(Number(book.rating) || 0);
 
-  // Szybka zmiana nośnika (Papier / E-book)
-  const currentFormat = book.format === 'ebook' ? 'ebook' : 'paper';
+  // Szybka zmiana nośnika (Papier / E-book / Obie wersje)
+  const currentFormat = FORMAT_META[book.format] ? book.format : 'paper';
   document.querySelectorAll('#detailFormatPills .status-pill-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.setFormat === currentFormat);
     btn.onclick = () => {
@@ -847,12 +1084,12 @@ function openDetailModal(bookId) {
     };
   });
 
-  document.getElementById('detailModal').classList.remove('hidden');
+  openModalById('detailModal');
 }
 
 function updateDetailFormatBadge(formatKey) {
   const badge = document.getElementById('detailFormatBadge');
-  const f = FORMAT_META[formatKey === 'ebook' ? 'ebook' : 'paper'];
+  const f = FORMAT_META[formatKey] || FORMAT_META.paper;
   badge.className = `badge badge-format ${f.css}`;
   badge.innerHTML = `${f.svg} <span>${f.label}</span>`;
 }
@@ -863,8 +1100,7 @@ function updateDetailRatingLabel(rating) {
 }
 
 function closeDetailModal() {
-  document.getElementById('detailModal').classList.add('hidden');
-  uiState.activeBookId = null;
+  closeModalById('detailModal');
 }
 
 /* ==========================================================================
@@ -913,7 +1149,8 @@ function openBookFormModal(bookToEdit = null, autoStartCamera = false) {
   }
 
   highlightStoreChip(document.getElementById('purchasePlaceInput').value);
-  document.getElementById('bookFormModal').classList.remove('hidden');
+  highlightCategoryChip(document.getElementById('categoryInput').value);
+  openModalById('bookFormModal');
 
   if (autoStartCamera) {
     startCameraScanner();
@@ -921,12 +1158,11 @@ function openBookFormModal(bookToEdit = null, autoStartCamera = false) {
 }
 
 function closeBookFormModal() {
-  stopCameraScanner();
-  document.getElementById('bookFormModal').classList.add('hidden');
+  closeModalById('bookFormModal');
 }
 
 function setFormFormat(formatVal) {
-  const val = formatVal === 'ebook' ? 'ebook' : 'paper';
+  const val = FORMAT_META[formatVal] ? formatVal : 'paper';
   uiState.formFormat = val;
   document.getElementById('formatInput').value = val;
   document.querySelectorAll('#formFormatSelector .format-option-btn').forEach((btn) => {
@@ -978,7 +1214,10 @@ async function handleIsbnLookup() {
     if (data.publisher) document.getElementById('publisherInput').value = data.publisher;
     if (data.publishedYear) document.getElementById('publishedYearInput').value = data.publishedYear;
     if (data.pages) document.getElementById('pagesInput').value = data.pages;
-    if (data.category) document.getElementById('categoryInput').value = data.category;
+    if (data.category) {
+      document.getElementById('categoryInput').value = data.category;
+      highlightCategoryChip(data.category);
+    }
     if (data.description) document.getElementById('descriptionInput').value = data.description;
     if (data.isEbookHint) setFormFormat('ebook');
 
@@ -1044,7 +1283,7 @@ async function startCameraScanner() {
   } catch (err) {
     showLookupFeedback(
       'warn',
-      'Nie udało się uruchomić kamery. Upewnij się, że przyznałeś uprawnienia do aparatu w przeglądarce.'
+      'Nie udało się uruchomić kamery. Upewnij się, że przyznałeś uprawnienia do aparatu w Safari.'
     );
     container.classList.add('hidden');
   }
@@ -1070,7 +1309,7 @@ async function handleSearchByTitle() {
   const resultsEl = document.getElementById('titleSearchResults');
   if (!query) return;
 
-  resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#93c5fd;">Szukam wydań dla „${escapeHtml(query)}”...</div>`;
+  resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#3b82f6;">Szukam wydań dla „${escapeHtml(query)}”...</div>`;
 
   try {
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=6`;
@@ -1078,7 +1317,7 @@ async function handleSearchByTitle() {
     const data = await res.json();
 
     if (!data?.items?.length) {
-      resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#fde68a;">Brak wyników. Wpisz dane ręcznie poniżej.</div>`;
+      resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#d97706;">Brak wyników. Wpisz dane ręcznie poniżej.</div>`;
       return;
     }
 
@@ -1111,7 +1350,9 @@ async function handleSearchByTitle() {
         document.getElementById('publisherInput').value = info.publisher || '';
         document.getElementById('publishedYearInput').value = (info.publishedDate || '').slice(0, 4);
         document.getElementById('pagesInput').value = info.pageCount || '';
-        document.getElementById('categoryInput').value = Array.isArray(info.categories) ? info.categories[0] : '';
+        const cat = Array.isArray(info.categories) ? translateGenreToPolish(info.categories[0]) : '';
+        document.getElementById('categoryInput').value = cat;
+        highlightCategoryChip(cat);
         document.getElementById('descriptionInput').value = info.description || '';
         if (cover) {
           document.getElementById('coverUrlInput').value = cover;
@@ -1124,7 +1365,7 @@ async function handleSearchByTitle() {
       resultsEl.appendChild(row);
     });
   } catch (e) {
-    resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#fca5a5;">Błąd połączenia podczas wyszukiwania.</div>`;
+    resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#ef4444;">Błąd połączenia podczas wyszukiwania.</div>`;
   }
 }
 
@@ -1153,8 +1394,8 @@ function loadGhConfig() {
   if (!ghConfig.owner && detectedOwner) ghConfig.owner = detectedOwner;
   if (!ghConfig.repo && detectedRepo) ghConfig.repo = detectedRepo;
 
-  document.getElementById('ghOwnerInput').value = ghConfig.owner || '';
-  document.getElementById('ghRepoInput').value = ghConfig.repo || '';
+  document.getElementById('ghOwnerInput').value = ghConfig.owner || 'paqs-89';
+  document.getElementById('ghRepoInput').value = ghConfig.repo || 'moja-biblioteczka';
   document.getElementById('ghBranchInput').value = ghConfig.branch || 'main';
   document.getElementById('ghPathInput').value = ghConfig.path || 'data/books.json';
   document.getElementById('ghTokenInput').value = ghConfig.token || '';
@@ -1343,7 +1584,7 @@ function bindEvents() {
   document.getElementById('btnQuickScan').addEventListener('click', () => openBookFormModal(null, true));
   document.getElementById('btnOpenSync').addEventListener('click', () => {
     updateJsonPreviewArea();
-    document.getElementById('syncModal').classList.remove('hidden');
+    openModalById('syncModal');
   });
 
   document.getElementById('libraryTitle').addEventListener('click', () => {
@@ -1381,17 +1622,15 @@ function bindEvents() {
     });
   });
 
-  // Zakładki statusów
-  document.querySelectorAll('.status-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.status-tab').forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      uiState.statusFilter = tab.dataset.status;
-      renderBookshelf();
-    });
+  // Systemowe listy rozwijane: Status, Gatunek, Sklep, Sortowanie
+  document.getElementById('filterStatus').addEventListener('change', (e) => {
+    uiState.statusFilter = e.target.value;
+    renderBookshelf();
   });
-
-  // Filtr sklepu i sortowanie
+  document.getElementById('filterCategory').addEventListener('change', (e) => {
+    uiState.categoryFilter = e.target.value;
+    renderBookshelf();
+  });
   document.getElementById('filterStore').addEventListener('change', (e) => {
     uiState.storeFilter = e.target.value;
     renderBookshelf();
@@ -1432,6 +1671,22 @@ function bindEvents() {
     saveLocalData(true);
   });
 
+  // Wybór motywu kolorystycznego aplikacji (Ciemny / Jasny pergamin / Jasny iOS / Auto)
+  document.getElementById('themeSelect').addEventListener('change', (e) => {
+    const theme = e.target.value;
+    appData.settings.appTheme = theme;
+    applyThemeMode(theme);
+    saveLocalData(true);
+  });
+
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      if (appData.settings.appTheme === 'auto') {
+        applyThemeMode('auto');
+      }
+    });
+  }
+
   // Usunięcie książek przykładowych
   document.getElementById('btnClearSamples').addEventListener('click', () => {
     appData.books = (appData.books || []).filter((b) => !b.isSample);
@@ -1470,7 +1725,7 @@ function bindEvents() {
     }
   });
 
-  // Przełącznik nośnika w formularzu (Papier / E-book)
+  // Przełącznik nośnika w formularzu (Papier / E-book / Papier + E-book)
   document.querySelectorAll('#formFormatSelector .format-option-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       setFormFormat(btn.dataset.formatVal);
@@ -1503,14 +1758,25 @@ function bindEvents() {
       const store = chip.dataset.store;
       document.getElementById('purchasePlaceInput').value = store;
       highlightStoreChip(store);
-      // Jeśli wybrano typowy sklep z e-bookami, podpowiedz format e-book
-      if (['publio', 'woblink', 'legimi', 'ebookpoint'].includes(store.toLowerCase())) {
+      if (['publio', 'woblink', 'legimi', 'ebookpoint'].includes(store.toLowerCase()) && uiState.formFormat === 'paper') {
         setFormFormat('ebook');
       }
     });
   });
   document.getElementById('purchasePlaceInput').addEventListener('input', (e) => {
     highlightStoreChip(e.target.value);
+  });
+
+  // Szybkie chipy gatunków (kategorii)
+  document.querySelectorAll('#categoryQuickChips .chip-category').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const cat = chip.dataset.category;
+      document.getElementById('categoryInput').value = cat;
+      highlightCategoryChip(cat);
+    });
+  });
+  document.getElementById('categoryInput').addEventListener('input', (e) => {
+    highlightCategoryChip(e.target.value);
   });
 
   // Wyczyść ocenę w formularzu
@@ -1541,6 +1807,7 @@ function bindEvents() {
 
     const editId = document.getElementById('bookIdInput').value;
     const now = new Date().toISOString();
+    const rawFormat = document.getElementById('formatInput').value;
 
     const bookRecord = {
       id: editId || `book-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -1551,7 +1818,7 @@ function bindEvents() {
       publishedYear: document.getElementById('publishedYearInput').value.trim(),
       pages: Number(document.getElementById('pagesInput').value) || '',
       category: document.getElementById('categoryInput').value.trim(),
-      format: document.getElementById('formatInput').value === 'ebook' ? 'ebook' : 'paper',
+      format: FORMAT_META[rawFormat] ? rawFormat : 'paper',
       status: document.getElementById('statusInput').value,
       rating: Number(document.getElementById('ratingInput').value) || 0,
       purchasePlace: document.getElementById('purchasePlaceInput').value.trim(),
@@ -1584,7 +1851,7 @@ function bindEvents() {
 
   // Modal Synchronizacji GitHub i plików JSON
   document.getElementById('btnCloseSync').addEventListener('click', () => {
-    document.getElementById('syncModal').classList.add('hidden');
+    closeModalById('syncModal');
   });
 
   document.querySelectorAll('.sync-tab').forEach((tab) => {
@@ -1652,17 +1919,16 @@ function bindEvents() {
     const backdrop = document.getElementById(id);
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) {
-        if (id === 'bookFormModal') closeBookFormModal();
-        else backdrop.classList.add('hidden');
+        closeModalById(id);
       }
     });
   });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      closeDetailModal();
-      closeBookFormModal();
-      document.getElementById('syncModal').classList.add('hidden');
+      closeModalById('detailModal');
+      closeModalById('bookFormModal');
+      closeModalById('syncModal');
     }
   });
 }
@@ -1700,6 +1966,13 @@ function highlightStoreChip(val) {
   const clean = (val || '').trim().toLowerCase();
   document.querySelectorAll('#storeQuickChips .chip-store').forEach((chip) => {
     chip.classList.toggle('active', chip.dataset.store.toLowerCase() === clean);
+  });
+}
+
+function highlightCategoryChip(val) {
+  const clean = (val || '').trim().toLowerCase();
+  document.querySelectorAll('#categoryQuickChips .chip-category').forEach((chip) => {
+    chip.classList.toggle('active', chip.dataset.category.toLowerCase() === clean);
   });
 }
 

@@ -1,29 +1,34 @@
 /* ==========================================================================
-   MOJA PRYWATNA BIBLIOTECZKA — STYLIZACJA WIRTUALNEGO REGAŁU I UI (PWA)
-   Zoptymalizowana pod iPhone Pro (iOS PWA) oraz ekrany desktopowe
+   MOJA PRYWATNA BIBLIOTECZKA — STYLIZACJA DLA IOS (IPHONE PRO) I MACOS SAFARI
    ========================================================================== */
 
 :root {
+  /* Domyślny motyw aplikacji: Ciemny gabinet (dark) */
   --bg-room: #140f0c;
-  --bg-room-accent: #231812;
-  --text-main: #f6efe8;
-  --text-muted: #b8a696;
-  --accent-gold: #e5a94c;
-  --accent-gold-hover: #f3bc64;
-  --accent-amber: #d97724;
+  --bg-gradient: radial-gradient(circle at 50% 0%, rgba(229, 169, 76, 0.12) 0%, transparent 60%), linear-gradient(180deg, #1b130e 0%, #110c09 100%);
+  --header-bg: rgba(24, 17, 13, 0.86);
+  --controls-bg: rgba(34, 24, 18, 0.84);
+  --input-bg: rgba(14, 9, 6, 0.72);
+  --pill-bg: rgba(255, 255, 255, 0.06);
+  --pill-hover: rgba(255, 255, 255, 0.12);
   --surface-card: #211813;
-  --surface-elevated: #2c2019;
-  --border-subtle: rgba(235, 205, 175, 0.14);
+  --surface-elevated: #2e211a;
+  --surface-inset: rgba(0, 0, 0, 0.25);
+  --text-main: #f6efe8;
+  --text-heading: #fff8f0;
+  --text-muted: #b5a392;
+  --border-subtle: rgba(235, 205, 175, 0.15);
+  --accent-gold: #e5a94c;
+  --accent-amber: #d97724;
+  --accent-tint: rgba(229, 169, 76, 0.18);
+  --accent-border: rgba(229, 169, 76, 0.45);
+  --btn-primary-text: #1b1008;
 
   /* Kolory statusów */
   --status-read: #2ea063;
   --status-reading: #e68a2e;
   --status-unread: #3b82f6;
   --status-wishlist: #a855f7;
-
-  /* Kolory nośników */
-  --format-paper: #d4a373;
-  --format-ebook: #38bdf8;
 
   /* Domyślny motyw drewna: Klasyczny Dąb (oak) */
   --wood-frame-outer: #4a2c16;
@@ -36,7 +41,60 @@
   --wood-highlight: rgba(255, 214, 170, 0.22);
 }
 
-/* Motyw drewna: Ciemny Orzech (walnut) */
+/* ==========================================================================
+   JASNY MOTYW 1: JASNY PERGAMIN (APPLE BOOKS SEPIA)
+   ========================================================================== */
+body[data-theme="sepia"] {
+  --bg-room: #f4ede1;
+  --bg-gradient: radial-gradient(circle at 50% 0%, rgba(217, 155, 78, 0.15) 0%, transparent 60%), linear-gradient(180deg, #f8f3e8 0%, #ede3d2 100%);
+  --header-bg: rgba(248, 242, 231, 0.88);
+  --controls-bg: rgba(255, 251, 244, 0.9);
+  --input-bg: #ffffff;
+  --pill-bg: rgba(92, 64, 38, 0.07);
+  --pill-hover: rgba(92, 64, 38, 0.13);
+  --surface-card: #fbf7f0;
+  --surface-elevated: #ffffff;
+  --surface-inset: rgba(110, 80, 50, 0.06);
+  --text-main: #291d14;
+  --text-heading: #1a110a;
+  --text-muted: #786452;
+  --border-subtle: rgba(110, 80, 50, 0.16);
+  --accent-gold: #b86b19;
+  --accent-amber: #9e550d;
+  --accent-tint: rgba(184, 107, 25, 0.13);
+  --accent-border: rgba(184, 107, 25, 0.42);
+  --btn-primary-text: #ffffff;
+}
+
+/* ==========================================================================
+   JASNY MOTYW 2: JASNY SYSTEMOWY IOS (CUPERTINO LIGHT)
+   ========================================================================== */
+body[data-theme="light"] {
+  --bg-room: #f2f2f7;
+  --bg-gradient: linear-gradient(180deg, #f7f7fa 0%, #e9e9f0 100%);
+  --header-bg: rgba(249, 249, 251, 0.88);
+  --controls-bg: rgba(255, 255, 255, 0.9);
+  --input-bg: #f2f2f7;
+  --pill-bg: rgba(60, 60, 67, 0.07);
+  --pill-hover: rgba(60, 60, 67, 0.13);
+  --surface-card: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-inset: rgba(60, 60, 67, 0.05);
+  --text-main: #1c1c1e;
+  --text-heading: #000000;
+  --text-muted: #6c6c70;
+  --border-subtle: rgba(60, 60, 67, 0.14);
+  --accent-gold: #c26d17;
+  --accent-amber: #a8580b;
+  --accent-tint: rgba(194, 109, 23, 0.12);
+  --accent-border: rgba(194, 109, 23, 0.4);
+  --btn-primary-text: #ffffff;
+}
+
+/* ==========================================================================
+   MOTYWY DREWNA REGAŁU
+   ========================================================================== */
+
 body[data-wood="walnut"] {
   --wood-frame-outer: #2d1a12;
   --wood-frame-inner: #1f110b;
@@ -48,19 +106,28 @@ body[data-wood="walnut"] {
   --wood-highlight: rgba(240, 195, 160, 0.16);
 }
 
-/* Motyw drewna: Jasna Sosna / Skandynawski (pine) */
 body[data-wood="pine"] {
   --wood-frame-outer: #9c7248;
-  --wood-frame-inner: #7d5834;
-  --wood-backwall: #3d2b1a;
-  --wood-plank-top: #d4a876;
-  --wood-plank-front-1: #bd8e5c;
-  --wood-plank-front-2: #9e7142;
+  --wood-frame-inner: #865f39;
+  --wood-backwall: #47321e;
+  --wood-plank-top: #d8ad7c;
+  --wood-plank-front-1: #c29361;
+  --wood-plank-front-2: #a37646;
   --wood-plank-bottom: #6b4a28;
   --wood-highlight: rgba(255, 245, 225, 0.35);
 }
 
-/* Motyw drewna: Nowoczesny Grafit (graphite) */
+body[data-wood="white"] {
+  --wood-frame-outer: #dcd6cc;
+  --wood-frame-inner: #eae5dc;
+  --wood-backwall: #cfc8bc;
+  --wood-plank-top: #faf8f5;
+  --wood-plank-front-1: #f0ece4;
+  --wood-plank-front-2: #ded8ce;
+  --wood-plank-bottom: #b8b0a4;
+  --wood-highlight: rgba(255, 255, 255, 0.8);
+}
+
 body[data-wood="graphite"] {
   --wood-frame-outer: #232529;
   --wood-frame-inner: #181a1d;
@@ -84,14 +151,19 @@ html, body {
   width: 100%;
   overflow-x: hidden;
   background-color: var(--bg-room);
-  background-image:
-    radial-gradient(circle at 50% 0%, rgba(229, 169, 76, 0.12) 0%, transparent 60%),
-    linear-gradient(180deg, #1b130e 0%, #110c09 100%);
+  background-image: var(--bg-gradient);
   color: var(--text-main);
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  line-height: 1.48;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.25s ease, color 0.2s ease;
+}
+
+/* Blokada przewijania tła gdy otwarty jest modal (naprawa błędu przewijania pod spodem w iOS Safari) */
+body.modal-open {
+  overflow: hidden !important;
+  overscroll-behavior: none;
 }
 
 .hidden {
@@ -103,18 +175,25 @@ svg {
 }
 
 /* ==========================================================================
-   NAGŁÓWEK APLIKACJI
+   NAGŁÓWEK APLIKACJI (Z OBNIŻENIEM POD ROZMYCIE STATUS BARA IPHONE PWA)
    ========================================================================== */
 
 .app-header {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(24, 17, 13, 0.9);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--header-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--border-subtle);
-  padding: max(0.7rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.7rem max(1rem, env(safe-area-inset-left));
+  padding: calc(env(safe-area-inset-top, 0px) + 0.85rem) max(1rem, env(safe-area-inset-right)) 0.75rem max(1rem, env(safe-area-inset-left));
+}
+
+/* W trybie pełnoekranowym PWA na iPhonie dodajemy wyraźny bezpieczny odstęp poniżej mlecznego rozmycia iOS */
+@media (display-mode: standalone) {
+  .app-header {
+    padding-top: max(3.75rem, calc(env(safe-area-inset-top, 47px) + 16px));
+  }
 }
 
 .header-inner {
@@ -137,7 +216,7 @@ svg {
 .brand-icon img {
   display: block;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .brand-text {
@@ -145,10 +224,10 @@ svg {
 }
 
 .brand-text h1 {
-  font-family: 'Lora', Georgia, serif;
+  font-family: 'Lora', 'New York', Georgia, serif;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff6ec;
+  color: var(--text-heading);
   letter-spacing: -0.01em;
   cursor: pointer;
   white-space: nowrap;
@@ -170,9 +249,9 @@ svg {
   font-weight: 600;
 }
 
-.stat-paper strong { color: #f3c68f; }
-.stat-ebook strong { color: #7dd3fc; }
-.stat-read strong { color: #5ce096; }
+.stat-paper strong { color: var(--accent-gold); }
+.stat-ebook strong { color: #0ea5e9; }
+.stat-read strong { color: var(--status-read); }
 
 .header-actions {
   display: flex;
@@ -180,15 +259,14 @@ svg {
   gap: 0.5rem;
 }
 
-/* Status synchronizacji GitHub */
 .sync-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--pill-bg);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
-  padding: 0.46rem 0.75rem;
+  padding: 0.46rem 0.78rem;
   border-radius: 999px;
   font-family: inherit;
   font-size: 0.78rem;
@@ -198,9 +276,9 @@ svg {
 }
 
 .sync-badge:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--pill-hover);
   color: var(--text-main);
-  border-color: rgba(229, 169, 76, 0.4);
+  border-color: var(--accent-border);
 }
 
 .sync-dot {
@@ -213,7 +291,7 @@ svg {
 
 .sync-dot.synced {
   background: #22c55e;
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
 }
 
 .sync-dot.syncing {
@@ -223,7 +301,7 @@ svg {
 
 .sync-dot.error {
   background: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
 }
 
 @keyframes pulseDot {
@@ -231,51 +309,47 @@ svg {
   50% { transform: scale(1.35); opacity: 0.5; }
 }
 
-/* Przyciski ogólne */
+/* Przyciski w stylu iOS */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.42rem;
-  padding: 0.52rem 0.9rem;
+  gap: 0.4rem;
+  padding: 0.52rem 0.92rem;
   border-radius: 10px;
   font-family: inherit;
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.18s ease;
+  transition: all 0.16s ease;
   white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-amber) 100%);
-  color: #1b1008;
-  box-shadow: 0 3px 12px rgba(217, 119, 36, 0.3);
-}
-
-.btn-primary:hover {
-  filter: brightness(1.07);
+  color: var(--btn-primary-text);
+  box-shadow: 0 3px 10px rgba(217, 119, 36, 0.25);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--pill-bg);
   color: var(--text-main);
   border-color: var(--border-subtle);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.13);
+  background: var(--pill-hover);
 }
 
 .btn-danger-outline {
   background: rgba(239, 68, 68, 0.1);
-  color: #fca5a5;
+  color: #ef4444;
   border-color: rgba(239, 68, 68, 0.35);
-}
-
-.btn-danger-outline:hover {
-  background: rgba(239, 68, 68, 0.22);
 }
 
 .btn-sm {
@@ -284,7 +358,7 @@ svg {
 }
 
 /* ==========================================================================
-   PASEK FILTRÓW I STEROWANIA PÓŁKĄ
+   PASEK FILTRÓW I STEROWANIA PÓŁKĄ (SYSTEMOWE LISTY ROZWIJANE IOS)
    ========================================================================== */
 
 .controls-bar {
@@ -294,14 +368,16 @@ svg {
 }
 
 .controls-inner {
-  background: rgba(34, 24, 18, 0.82);
+  background: var(--controls-bg);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  padding: 0.8rem 0.95rem;
+  border-radius: 16px;
+  padding: 0.85rem 0.95rem;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .controls-top-row,
@@ -309,7 +385,7 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: 0.6rem;
   flex-wrap: wrap;
 }
 
@@ -330,7 +406,7 @@ svg {
 
 .search-box input {
   width: 100%;
-  background: rgba(15, 10, 7, 0.7);
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 0.5rem 2.1rem 0.5rem 2.3rem;
@@ -359,80 +435,66 @@ svg {
   padding: 0.25rem;
 }
 
-/* Zakładki statusu czytania */
-.status-tabs {
-  display: flex;
-  align-items: center;
-  gap: 0.38rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: 2px;
+/* Siatka 4 systemowych list rozwijanych (Status, Gatunek, Sklep, Sortowanie) */
+.ios-selects-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
 }
 
-.status-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.status-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.38rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
-  padding: 0.42rem 0.76rem;
-  border-radius: 9px;
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.16s ease;
-}
-
-.status-tab:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.status-tab.active {
-  background: rgba(229, 169, 76, 0.18);
-  color: var(--accent-gold);
-  border-color: rgba(229, 169, 76, 0.42);
-  font-weight: 600;
-}
-
-.filter-group,
-.shelf-view-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
+/* Natywne <select> wystylizowane w stylu iOS / macOS */
 .select-wrap {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  background: rgba(15, 10, 7, 0.6);
+  gap: 0.42rem;
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
-  border-radius: 9px;
-  padding: 0.34rem 0.6rem;
-  font-size: 0.79rem;
+  border-radius: 10px;
+  padding: 0.44rem 1.75rem 0.44rem 0.68rem;
+  font-size: 0.81rem;
   color: var(--text-muted);
+  min-width: 0;
   max-width: 100%;
+  cursor: pointer;
+}
+
+/* Strzałka rozwijania listy w stylu iOS */
+.select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.8px solid var(--text-muted);
+  border-bottom: 1.8px solid var(--text-muted);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+.select-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .select-wrap select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   border: none;
   color: var(--text-main);
   font-family: inherit;
-  font-size: 0.79rem;
+  font-size: 0.81rem;
   font-weight: 500;
   cursor: pointer;
-  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .select-wrap select:focus {
@@ -440,61 +502,74 @@ svg {
 }
 
 .select-wrap select option {
-  background: #221812;
+  background: var(--surface-card);
   color: var(--text-main);
 }
 
+/* UISegmentedControl w stylu iOS */
 .segmented-control {
   display: inline-flex;
-  background: rgba(12, 8, 5, 0.68);
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
-  border-radius: 9px;
-  padding: 2px;
+  border-radius: 10px;
+  padding: 3px;
 }
 
 .seg-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 0.36rem 0.68rem;
+  padding: 0.36rem 0.72rem;
   border-radius: 7px;
   font-family: inherit;
-  font-size: 0.78rem;
+  font-size: 0.79rem;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: all 0.16s ease;
 }
 
 .seg-btn.active {
   background: var(--surface-elevated);
   color: var(--accent-gold);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.shelf-view-left,
+.shelf-appearance-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .btn-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.38rem;
-  background: rgba(15, 10, 7, 0.6);
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
-  padding: 0.38rem 0.7rem;
-  border-radius: 9px;
+  padding: 0.42rem 0.75rem;
+  border-radius: 10px;
   font-family: inherit;
-  font-size: 0.78rem;
+  font-size: 0.79rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-chip.active {
-  background: rgba(229, 169, 76, 0.18);
+  background: var(--accent-tint);
   color: var(--accent-gold);
-  border-color: rgba(229, 169, 76, 0.45);
+  border-color: var(--accent-border);
+  font-weight: 600;
 }
 
 /* Pasek książek przykładowych */
@@ -505,16 +580,16 @@ svg {
 }
 
 .sample-banner-inner {
-  background: rgba(229, 169, 76, 0.12);
-  border: 1px solid rgba(229, 169, 76, 0.3);
-  border-radius: 10px;
+  background: var(--accent-tint);
+  border: 1px solid var(--accent-border);
+  border-radius: 12px;
   padding: 0.55rem 0.9rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   font-size: 0.8rem;
-  color: #f7dfc2;
+  color: var(--text-main);
   flex-wrap: wrap;
 }
 
@@ -526,11 +601,11 @@ svg {
 }
 
 .btn-sample-clear {
-  background: rgba(0, 0, 0, 0.38);
-  border: 1px solid rgba(229, 169, 76, 0.45);
+  background: var(--surface-card);
+  border: 1px solid var(--accent-border);
   color: var(--accent-gold);
   padding: 0.34rem 0.72rem;
-  border-radius: 7px;
+  border-radius: 8px;
   font-family: inherit;
   font-size: 0.76rem;
   font-weight: 600;
@@ -561,9 +636,9 @@ svg {
   border-radius: 16px 16px 8px 8px;
   padding: 0 20px 18px;
   box-shadow:
-    0 24px 55px rgba(0, 0, 0, 0.75),
+    0 20px 48px rgba(0, 0, 0, 0.42),
     inset 0 2px 3px var(--wood-highlight),
-    0 0 0 1px rgba(0, 0, 0, 0.6);
+    0 0 0 1px rgba(0, 0, 0, 0.25);
 }
 
 .bookcase-crown {
@@ -575,7 +650,7 @@ svg {
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.55),
+    0 6px 16px rgba(0, 0, 0, 0.35),
     inset 0 2px 2px var(--wood-highlight);
   border-bottom: 2px solid var(--wood-plank-bottom);
 }
@@ -590,7 +665,7 @@ svg {
   padding: 2px 14px;
   border-radius: 4px;
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.35),
     inset 0 1px 1px rgba(255, 255, 255, 0.45);
   border: 1px solid #6b4710;
 }
@@ -599,17 +674,17 @@ svg {
   background:
     repeating-linear-gradient(
       90deg,
-      rgba(0, 0, 0, 0.14) 0px,
-      rgba(0, 0, 0, 0.14) 1px,
+      rgba(0, 0, 0, 0.09) 0px,
+      rgba(0, 0, 0, 0.09) 1px,
       transparent 1px,
       transparent 96px
     ),
     radial-gradient(circle at 50% 20%, rgba(255, 196, 120, 0.06), transparent 70%),
     var(--wood-backwall);
   box-shadow:
-    inset 12px 0 22px rgba(0, 0, 0, 0.65),
-    inset -12px 0 22px rgba(0, 0, 0, 0.65),
-    inset 0 12px 24px rgba(0, 0, 0, 0.55);
+    inset 12px 0 22px rgba(0, 0, 0, 0.45),
+    inset -12px 0 22px rgba(0, 0, 0, 0.45),
+    inset 0 12px 24px rgba(0, 0, 0, 0.38);
   border-left: 3px solid var(--wood-plank-bottom);
   border-right: 3px solid var(--wood-plank-bottom);
 }
@@ -625,6 +700,10 @@ svg {
   font-weight: 600;
 }
 
+body[data-wood="white"] .shelf-category-header {
+  color: #2c241d;
+}
+
 .shelf-category-title {
   display: inline-flex;
   align-items: center;
@@ -632,13 +711,12 @@ svg {
 }
 
 .shelf-category-header .shelf-count {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 0.74rem;
-  color: var(--text-muted);
-  background: rgba(0, 0, 0, 0.35);
+  color: #e6d5c3;
+  background: rgba(0, 0, 0, 0.4);
   padding: 0.18rem 0.58rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .shelf-bay {
@@ -685,7 +763,7 @@ svg {
     ),
     linear-gradient(180deg, var(--wood-plank-front-1) 0%, var(--wood-plank-front-2) 78%, var(--wood-plank-bottom) 100%);
   box-shadow:
-    0 12px 22px rgba(0, 0, 0, 0.72),
+    0 12px 22px rgba(0, 0, 0, 0.55),
     inset 0 2px 1px var(--wood-highlight);
   border-top: 1px solid rgba(255, 230, 195, 0.25);
 }
@@ -697,8 +775,8 @@ svg {
   right: 0;
   bottom: 100%;
   height: 15px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, var(--wood-plank-top) 100%);
-  border-top: 1px solid rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, var(--wood-plank-top) 100%);
+  border-top: 1px solid rgba(0, 0, 0, 0.25);
   pointer-events: none;
 }
 
@@ -707,7 +785,7 @@ svg {
   height: 18px;
   background: linear-gradient(180deg, var(--wood-plank-front-2) 0%, var(--wood-plank-bottom) 100%);
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.45);
 }
 
 /* ==========================================================================
@@ -737,8 +815,8 @@ svg {
   border-radius: 3px 6px 6px 3px;
   background: #2b1d16;
   box-shadow:
-    -4px 6px 14px rgba(0, 0, 0, 0.68),
-    2px 8px 18px rgba(0, 0, 0, 0.55);
+    -4px 6px 14px rgba(0, 0, 0, 0.58),
+    2px 8px 18px rgba(0, 0, 0, 0.45);
   transform: rotateY(-7deg);
   transform-style: preserve-3d;
   transition: transform 0.24s ease, box-shadow 0.24s ease;
@@ -747,11 +825,10 @@ svg {
 .book-card-cover:hover .book-3d-wrap {
   transform: rotateY(0deg);
   box-shadow:
-    0 16px 28px rgba(0, 0, 0, 0.78),
-    0 4px 10px rgba(0, 0, 0, 0.5);
+    0 16px 28px rgba(0, 0, 0, 0.68),
+    0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
-/* Blok kartek papieru z prawej strony książki papierowej */
 .book-3d-wrap::after {
   content: "";
   position: absolute;
@@ -772,12 +849,11 @@ svg {
   z-index: -1;
 }
 
-/* Dla e-booka smukła ramka czytnika zamiast kartek papieru */
 .book-3d-wrap.is-ebook::after {
   width: 4px;
   right: -4px;
   background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .book-3d-wrap::before {
@@ -840,7 +916,6 @@ svg {
   overflow: hidden;
 }
 
-/* Wstążka statusu w prawym górnym rogu okładki (z ikoną SVG) */
 .book-status-ribbon {
   position: absolute;
   top: -4px;
@@ -868,7 +943,6 @@ svg {
 .book-status-ribbon.status-unread { background: var(--status-unread); }
 .book-status-ribbon.status-wishlist { background: var(--status-wishlist); }
 
-/* Znacznik E-book / Papier w lewym górnym rogu okładki */
 .book-format-chip {
   position: absolute;
   top: 6px;
@@ -879,7 +953,7 @@ svg {
   gap: 3px;
   padding: 2px 5px;
   border-radius: 5px;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -898,6 +972,12 @@ svg {
   background: rgba(24, 16, 11, 0.82);
   color: #ebd5be;
   border: 1px solid rgba(235, 213, 190, 0.25);
+}
+
+.book-format-chip.is-both {
+  background: rgba(20, 24, 18, 0.88);
+  color: #fde68a;
+  border: 1px solid rgba(250, 204, 21, 0.45);
 }
 
 .book-cover-overlay {
@@ -1098,12 +1178,15 @@ svg {
   width: 100%;
   text-align: center;
   padding: 2.2rem 1rem 1.6rem;
-  color: var(--text-muted);
+  color: #e6d5c3;
+}
+
+body[data-wood="white"] .empty-shelf-placeholder {
+  color: #4a3f35;
 }
 
 .empty-shelf-placeholder h3 {
   font-family: 'Lora', serif;
-  color: var(--text-main);
   font-size: 1.12rem;
   margin-bottom: 0.35rem;
 }
@@ -1111,25 +1194,25 @@ svg {
 .empty-shelf-placeholder p {
   font-size: 0.85rem;
   margin-bottom: 1rem;
+  opacity: 0.85;
 }
 
 /* ==========================================================================
-   MODALE (SZCZEGÓŁY KSIĄŻKI, DODAWANIE/EDYCJA, SYNCHRONIZACJA GITHUB)
-   Zabezpieczone przed wychodzeniem elementów poza obrys (min-width: 0)
+   MODALE W STYLU NATYWNYCH KART IOS (SHEET + PŁYNNE PRZEWIJANIE + SWIPE-DOWN)
    ========================================================================== */
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(8, 5, 3, 0.8);
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
+  background: rgba(6, 4, 3, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  overflow-y: auto;
+  overflow: hidden; /* Kluczowe dla iOS Safari: tylko .modal-card jest kontenerem przewijania! */
 }
 
 .modal-card {
@@ -1139,12 +1222,22 @@ svg {
   max-height: 90dvh;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   background: var(--surface-card);
-  border: 1px solid rgba(235, 200, 165, 0.22);
-  border-radius: 18px;
-  padding: 1.4rem;
-  box-shadow: 0 28px 65px rgba(0, 0, 0, 0.85);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 1.35rem;
+  box-shadow: 0 28px 65px rgba(0, 0, 0, 0.55);
+  will-change: transform;
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.modal-sheet-top {
+  cursor: grab;
+  user-select: none;
 }
 
 .modal-drag-handle {
@@ -1170,6 +1263,7 @@ svg {
   font-family: 'Lora', serif;
   font-size: 1.25rem;
   line-height: 1.3;
+  color: var(--text-heading);
 }
 
 .modal-close {
@@ -1179,7 +1273,7 @@ svg {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--pill-bg);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   cursor: pointer;
@@ -1190,8 +1284,8 @@ svg {
 }
 
 .modal-close:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
+  background: var(--pill-hover);
+  color: var(--text-main);
 }
 
 /* Układ modalu szczegółów */
@@ -1218,7 +1312,7 @@ svg {
   height: 256px;
   border-radius: 4px 8px 8px 4px;
   overflow: hidden;
-  box-shadow: -6px 10px 24px rgba(0, 0, 0, 0.7);
+  box-shadow: -6px 10px 24px rgba(0, 0, 0, 0.45);
   background: #2b1d15;
 }
 
@@ -1230,7 +1324,7 @@ svg {
 
 .detail-quick-rating {
   text-align: center;
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--surface-inset);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 0.65rem 0.75rem;
@@ -1239,7 +1333,8 @@ svg {
 
 .quick-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.71rem;
+  font-weight: 600;
   color: var(--text-muted);
   margin-bottom: 0.35rem;
   text-transform: uppercase;
@@ -1256,17 +1351,18 @@ svg {
   background: none;
   border: none;
   padding: 2px;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--text-muted);
+  opacity: 0.4;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.12s, color 0.12s;
+  transition: transform 0.12s, color 0.12s, opacity 0.12s;
 }
 
 .star-btn.filled {
-  color: #fbbf24;
-  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.35));
+  color: #f59e0b;
+  opacity: 1;
 }
 
 .star-btn:hover {
@@ -1278,6 +1374,7 @@ svg {
   font-size: 0.75rem;
   color: var(--accent-gold);
   margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 .detail-badges {
@@ -1298,25 +1395,39 @@ svg {
 }
 
 .badge-format.is-ebook {
-  background: rgba(56, 189, 248, 0.16);
+  background: rgba(14, 165, 233, 0.14);
+  color: #0284c7;
+  border: 1px solid rgba(14, 165, 233, 0.35);
+}
+
+body[data-theme="dark"] .badge-format.is-ebook {
   color: #7dd3fc;
-  border: 1px solid rgba(56, 189, 248, 0.35);
 }
 
 .badge-format.is-paper {
-  background: rgba(212, 163, 115, 0.16);
-  color: #f3c68f;
-  border: 1px solid rgba(212, 163, 115, 0.35);
+  background: var(--accent-tint);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-border);
+}
+
+.badge-format.is-both {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+body[data-theme="dark"] .badge-format.is-both {
+  color: #fde047;
 }
 
 .badge-category {
-  background: rgba(229, 169, 76, 0.16);
+  background: var(--accent-tint);
   color: var(--accent-gold);
-  border: 1px solid rgba(229, 169, 76, 0.35);
+  border: 1px solid var(--accent-border);
 }
 
 .badge-isbn {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--pill-bg);
   color: var(--text-muted);
   font-family: monospace;
 }
@@ -1326,6 +1437,7 @@ svg {
   font-size: 1.4rem;
   line-height: 1.25;
   margin-bottom: 0.2rem;
+  color: var(--text-heading);
   word-break: break-word;
 }
 
@@ -1333,6 +1445,7 @@ svg {
   font-size: 0.96rem;
   color: var(--accent-gold);
   margin-bottom: 0.9rem;
+  font-weight: 500;
 }
 
 .detail-status-switcher {
@@ -1349,11 +1462,11 @@ svg {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--pill-bg);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   padding: 0.4rem 0.72rem;
-  border-radius: 8px;
+  border-radius: 9px;
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 500;
@@ -1362,8 +1475,8 @@ svg {
 }
 
 .status-pill-btn.active {
-  background: rgba(229, 169, 76, 0.22);
-  color: #fff;
+  background: var(--accent-tint);
+  color: var(--text-heading);
   border-color: var(--accent-gold);
   font-weight: 600;
 }
@@ -1377,7 +1490,7 @@ svg {
 
 .meta-item {
   min-width: 0;
-  background: rgba(0, 0, 0, 0.26);
+  background: var(--surface-inset);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 0.55rem 0.72rem;
@@ -1402,7 +1515,7 @@ svg {
 
 .detail-notes-box,
 .detail-desc-box {
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--surface-inset);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 0.72rem 0.88rem;
@@ -1418,7 +1531,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 0.38rem;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
@@ -1428,7 +1541,7 @@ svg {
 .detail-notes-box p,
 .detail-desc-box p {
   font-size: 0.85rem;
-  color: #e8ddd3;
+  color: var(--text-main);
   white-space: pre-line;
   word-break: break-word;
 }
@@ -1445,8 +1558,8 @@ svg {
    ========================================================================== */
 
 .isbn-lookup-panel {
-  background: linear-gradient(135deg, rgba(229, 169, 76, 0.14) 0%, rgba(44, 30, 21, 0.6) 100%);
-  border: 1px solid rgba(229, 169, 76, 0.35);
+  background: var(--accent-tint);
+  border: 1px solid var(--accent-border);
   border-radius: 14px;
   padding: 0.95rem 1.05rem;
   margin-bottom: 1rem;
@@ -1499,11 +1612,11 @@ svg {
 .isbn-field-wrap input {
   width: 100%;
   min-width: 0;
-  background: rgba(12, 8, 5, 0.75);
-  border: 1px solid rgba(229, 169, 76, 0.45);
+  background: var(--input-bg);
+  border: 1px solid var(--accent-border);
   border-radius: 10px;
   padding: 0.55rem 0.8rem;
-  color: #fff;
+  color: var(--text-main);
   font-size: 0.95rem;
   font-family: monospace;
   letter-spacing: 0.04em;
@@ -1517,26 +1630,27 @@ svg {
 }
 
 .lookup-feedback.loading {
-  background: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.14);
+  color: #3b82f6;
   border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .lookup-feedback.success {
-  background: rgba(46, 160, 99, 0.18);
-  color: #86efac;
+  background: rgba(46, 160, 99, 0.16);
+  color: var(--status-read);
   border: 1px solid rgba(46, 160, 99, 0.4);
 }
 
 .lookup-feedback.warn {
   background: rgba(245, 158, 11, 0.16);
-  color: #fde68a;
+  color: #d97706;
   border: 1px solid rgba(245, 158, 11, 0.38);
 }
 
 .scanner-container {
   margin-top: 0.75rem;
   background: #0d0907;
+  color: #fff;
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 0.75rem;
@@ -1569,7 +1683,7 @@ svg {
 .title-search-drawer {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px dashed rgba(229, 169, 76, 0.3);
+  border-top: 1px dashed var(--accent-border);
 }
 
 .title-search-row {
@@ -1580,11 +1694,11 @@ svg {
 .title-search-row input {
   flex: 1;
   min-width: 0;
-  background: rgba(12, 8, 5, 0.75);
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 0.48rem 0.75rem;
-  color: #fff;
+  color: var(--text-main);
   font-size: 0.85rem;
 }
 
@@ -1600,7 +1714,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 0.4rem 0.65rem;
@@ -1608,7 +1722,7 @@ svg {
 }
 
 .title-result-item:hover {
-  background: rgba(229, 169, 76, 0.16);
+  background: var(--accent-tint);
 }
 
 .title-result-item img {
@@ -1616,7 +1730,6 @@ svg {
   height: 46px;
   object-fit: cover;
   border-radius: 3px;
-  background: #2b1d15;
 }
 
 .title-result-info {
@@ -1627,7 +1740,7 @@ svg {
 
 .title-result-info strong {
   display: block;
-  color: #fff;
+  color: var(--text-heading);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1640,7 +1753,7 @@ svg {
 
 /* Sekcje formularza */
 .form-section {
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--surface-inset);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 0.95rem 1.05rem;
@@ -1652,7 +1765,7 @@ svg {
 .form-section h3 {
   font-size: 0.93rem;
   margin-bottom: 0.75rem;
-  color: #f3e5d7;
+  color: var(--text-heading);
 }
 
 .hint-inline {
@@ -1661,21 +1774,21 @@ svg {
   color: var(--text-muted);
 }
 
-/* Wybór nośnika: Książka papierowa vs E-book */
+/* Wybór nośnika: Papierowa vs E-book vs Papier + E-book */
 .format-selector-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
 }
 
 .format-option-btn {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  background: rgba(14, 9, 6, 0.68);
+  gap: 0.55rem;
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  padding: 0.6rem 0.8rem;
+  padding: 0.55rem 0.72rem;
   color: var(--text-muted);
   font-family: inherit;
   text-align: left;
@@ -1685,14 +1798,14 @@ svg {
 }
 
 .format-option-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--pill-hover);
   color: var(--text-main);
 }
 
 .format-option-btn.active {
-  background: rgba(229, 169, 76, 0.16);
+  background: var(--accent-tint);
   border-color: var(--accent-gold);
-  color: #fff;
+  color: var(--text-heading);
 }
 
 .format-option-btn.active svg {
@@ -1705,24 +1818,29 @@ svg {
 
 .format-opt-text strong {
   display: block;
-  font-size: 0.83rem;
-  color: var(--text-main);
+  font-size: 0.81rem;
+  color: var(--text-heading);
 }
 
 .format-opt-text span {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Siatki formularza z pełnym zabezpieczeniem min-width: 0 */
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.form-grid-3-equal {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
 }
 
 .form-grid-store-row {
@@ -1750,7 +1868,7 @@ svg {
 .form-group label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #d9c7b6;
+  color: var(--text-muted);
 }
 
 .form-group input,
@@ -1759,7 +1877,7 @@ svg {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  background: rgba(14, 9, 6, 0.75);
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 9px;
   padding: 0.5rem 0.72rem;
@@ -1784,7 +1902,7 @@ svg {
 }
 
 .btn-clear-rating {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--pill-bg);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   border-radius: 6px;
@@ -1802,7 +1920,7 @@ svg {
 }
 
 .chip-store {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--pill-bg);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   border-radius: 6px;
@@ -1815,12 +1933,13 @@ svg {
 
 .chip-store:hover,
 .chip-store.active {
-  background: rgba(229, 169, 76, 0.2);
+  background: var(--accent-tint);
   color: var(--accent-gold);
-  border-color: rgba(229, 169, 76, 0.45);
+  border-color: var(--accent-border);
+  font-weight: 600;
 }
 
-/* Punkt 3: Edytor danych książki i okładki — zero rozjeżdżania */
+/* Punkt 3: Edytor danych książki i okładki */
 .book-details-editor {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
@@ -1852,8 +1971,8 @@ svg {
   width: 136px;
   height: 196px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px dashed rgba(235, 200, 165, 0.3);
+  background: var(--input-bg);
+  border: 1px dashed var(--border-subtle);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -1896,7 +2015,7 @@ svg {
   width: 100%;
   font-size: 0.75rem;
   color: var(--text-muted);
-  background: rgba(14, 9, 6, 0.55);
+  background: var(--input-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 0.25rem 0.5rem;
@@ -1934,7 +2053,7 @@ svg {
   display: inline-flex;
   align-items: center;
   gap: 0.38rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--pill-bg);
   border: 1px solid transparent;
   color: var(--text-muted);
   padding: 0.44rem 0.8rem;
@@ -1947,9 +2066,9 @@ svg {
 }
 
 .sync-tab.active {
-  background: rgba(229, 169, 76, 0.18);
+  background: var(--accent-tint);
   color: var(--accent-gold);
-  border-color: rgba(229, 169, 76, 0.4);
+  border-color: var(--accent-border);
 }
 
 .sync-intro {
@@ -1960,8 +2079,8 @@ svg {
 
 .badge-private {
   font-size: 0.67rem;
-  background: rgba(46, 160, 99, 0.18);
-  color: #86efac;
+  background: rgba(46, 160, 99, 0.16);
+  color: var(--status-read);
   padding: 2px 7px;
   border-radius: 999px;
   margin-left: 4px;
@@ -1994,15 +2113,15 @@ svg {
 }
 
 .sync-status-banner.ok {
-  background: rgba(46, 160, 99, 0.18);
+  background: rgba(46, 160, 99, 0.16);
   border: 1px solid rgba(46, 160, 99, 0.4);
-  color: #86efac;
+  color: var(--status-read);
 }
 
 .sync-status-banner.err {
-  background: rgba(239, 68, 68, 0.16);
+  background: rgba(239, 68, 68, 0.14);
   border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
+  color: #ef4444;
 }
 
 .sync-actions-bar,
@@ -2016,7 +2135,6 @@ svg {
 .code-textarea {
   font-family: monospace;
   font-size: 0.76rem;
-  color: #d6c7b7;
 }
 
 .guide-steps {
@@ -2028,7 +2146,7 @@ svg {
 .guide-step {
   display: flex;
   gap: 0.8rem;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--surface-inset);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 0.8rem 0.95rem;
@@ -2039,7 +2157,7 @@ svg {
   height: 26px;
   border-radius: 50%;
   background: var(--accent-gold);
-  color: #1b1008;
+  color: var(--btn-primary-text);
   font-weight: 700;
   font-size: 0.82rem;
   display: flex;
@@ -2051,7 +2169,7 @@ svg {
 .guide-step h4 {
   font-size: 0.9rem;
   margin-bottom: 0.2rem;
-  color: #fff;
+  color: var(--text-heading);
 }
 
 .guide-step p,
@@ -2083,13 +2201,13 @@ svg {
 }
 
 .toast {
-  background: rgba(32, 22, 16, 0.96);
-  border: 1px solid rgba(229, 169, 76, 0.45);
+  background: rgba(28, 20, 15, 0.95);
+  border: 1px solid var(--accent-border);
   color: #fff;
   padding: 0.62rem 1rem;
   border-radius: 999px;
   font-size: 0.82rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
   animation: slideInToast 0.2s ease;
 }
 
@@ -2108,7 +2226,11 @@ svg {
     display: none !important;
   }
 
-  /* Kompaktowy nagłówek mobilny */
+  /* Dodatkowy bezpieczny odstęp od góry na iPhonie, aby rozmycie paska statusu iOS nie nachodziło na tytuł */
+  .app-header {
+    padding-top: max(3.6rem, calc(env(safe-area-inset-top, 44px) + 14px));
+  }
+
   .header-inner {
     gap: 0.55rem;
   }
@@ -2119,11 +2241,11 @@ svg {
   }
 
   .brand-text h1 {
-    font-size: 1.05rem;
+    font-size: 1.06rem;
   }
 
   .stats-inline {
-    font-size: 0.71rem;
+    font-size: 0.72rem;
   }
 
   .header-actions {
@@ -2135,9 +2257,9 @@ svg {
     flex: 1;
   }
 
-  /* Pasek filtrów dopasowany pod kciuk na telefonie */
+  /* Pasek filtrów na iPhonie — wszystko w równej siatce bez przewijania w poziomie */
   .controls-inner {
-    padding: 0.7rem;
+    padding: 0.75rem;
     gap: 0.55rem;
   }
 
@@ -2156,31 +2278,30 @@ svg {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .format-filter-group .seg-btn {
-    justify-content: center;
+  /* 4 systemowe listy rozwijane w układzie 2x2 na ekranie iPhone'a */
+  .ios-selects-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
   }
 
   .controls-bottom-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.5rem;
+    gap: 0.45rem;
   }
 
-  .filter-group {
+  .shelf-view-left,
+  .shelf-appearance-right {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.45rem;
     width: 100%;
   }
 
-  .filter-group .select-wrap {
+  .view-mode-group {
     width: 100%;
-    justify-content: space-between;
-  }
-
-  .shelf-view-controls {
-    width: 100%;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   /* Regał na ekranie telefonu */
@@ -2214,7 +2335,7 @@ svg {
     height: 154px;
   }
 
-  /* Modale jako natywne dolne karty iOS (Bottom Sheet) */
+  /* Modale jako natywne dolne karty iOS (Bottom Sheet) ze wsparciem gestu przeciągnięcia w dół */
   .modal-backdrop {
     align-items: flex-end;
     padding: 0;
@@ -2222,21 +2343,28 @@ svg {
 
   .modal-card {
     max-width: 100%;
-    max-height: 93dvh;
-    border-radius: 22px 22px 0 0;
+    max-height: 91dvh;
+    border-radius: 24px 24px 0 0;
     border-left: none;
     border-right: none;
     border-bottom: none;
-    padding: 0.75rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
+    padding: 0.4rem 1rem calc(1.3rem + env(safe-area-inset-bottom));
+  }
+
+  .modal-sheet-top {
+    padding-top: 0.45rem;
+    padding-bottom: 0.35rem;
+    touch-action: none; /* Pozwala płynnie ściągnąć kartę palcem w dół */
   }
 
   .modal-drag-handle {
     display: block;
-    width: 38px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.24);
+    width: 42px;
+    height: 5px;
+    background: var(--text-muted);
+    opacity: 0.38;
     border-radius: 999px;
-    margin: 0 auto 0.65rem;
+    margin: 0 auto 0.5rem;
   }
 
   .modal-close {
@@ -2244,7 +2372,7 @@ svg {
     right: 0.85rem;
   }
 
-  /* Zapobieganie auto-zoomowi Safari na iOS przy kliknięciu w pole input (min 16px) */
+  /* Zapobieganie auto-zoomowi Safari na iOS (min 16px) */
   .search-box input,
   .form-group input,
   .form-group select,
@@ -2254,9 +2382,10 @@ svg {
     font-size: 16px !important;
   }
 
-  /* Siatki formularza i szczegółów w 1 kolumnie na telefonie */
+  /* Siatki formularza i szczegółów dopasowane do ekranu iPhone'a */
   .detail-layout,
   .form-grid-2,
+  .form-grid-3-equal,
   .form-grid-store-row,
   .format-selector-cards,
   .detail-meta-grid {
@@ -2268,7 +2397,6 @@ svg {
     height: 212px;
   }
 
-  /* Punkt 3 na telefonie: kompaktowy wiersz podglądu okładki + pełna szerokość pól pod spodem */
   .book-details-editor {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.85rem;
@@ -2277,7 +2405,7 @@ svg {
   .cover-preview-column {
     flex-direction: row;
     align-items: center;
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--input-bg);
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
     padding: 0.6rem;
