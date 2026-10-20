@@ -28,7 +28,7 @@ const SVG_ICONS = {
   ebook: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
   both: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H14v15H6.5a2.5 2.5 0 0 0 0 5H14"/><rect x="12" y="6" width="9" height="15" rx="1.5"/></svg>`,
   store: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
-  starFilled: (size = 12) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  starFilled: (size = 12) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon fill="#f59e0b" stroke="#f59e0b" points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
   starOutline: (size = 12) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
 };
 
@@ -107,7 +107,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker
+      .register('./sw.js?v=8')
+      .then((reg) => {
+        if (reg && typeof reg.update === 'function') {
+          reg.update().catch(() => {});
+        }
+      })
+      .catch(() => {});
   }
 }
 
@@ -280,19 +287,71 @@ function saveLocalData(triggerGitHubSync = true) {
 }
 
 /* ==========================================================================
-   ZARZĄDZANIE MODALMAMI IOS (BLOKADA PRZEWIJANIA TŁA + SWIPE-TO-DISMISS)
+   ZARZĄDZANIE MODALAMI IOS (ZAWSZE NA GÓRZE + IZOLACJA PRZEWIJANIA + SWIPE)
    ========================================================================== */
+
+let lockedScrollY = 0;
+let isBodyScrollLocked = false;
+
+function lockBodyScroll() {
+  if (isBodyScrollLocked) return;
+  lockedScrollY = window.scrollY || window.pageYOffset || 0;
+  isBodyScrollLocked = true;
+  document.body.classList.add('modal-open');
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${lockedScrollY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+}
+
+function unlockBodyScroll() {
+  if (!isBodyScrollLocked) return;
+  isBodyScrollLocked = false;
+  document.body.classList.remove('modal-open');
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  window.scrollTo(0, lockedScrollY);
+}
+
+function resetModalScrollToTop(backdrop) {
+  if (!backdrop) return;
+  backdrop.scrollTop = 0;
+  const card = backdrop.querySelector('.modal-card');
+  if (card) {
+    card.scrollTop = 0;
+    if (typeof card.scrollTo === 'function') {
+      try {
+        card.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch (e) {
+        card.scrollTop = 0;
+      }
+    }
+  }
+  backdrop.querySelectorAll('.title-search-results, .settings-body, .detail-layout, form').forEach((el) => {
+    el.scrollTop = 0;
+  });
+}
 
 function openModalById(modalId) {
   const backdrop = document.getElementById(modalId);
   if (!backdrop) return;
   const card = backdrop.querySelector('.modal-card');
   if (card) {
+    card.style.transition = '';
     card.style.transform = '';
-    card.scrollTop = 0;
   }
+  // KLUCZOWE NA IOS SAFARI: Najpierw usuń display:none (.hidden), a dopiero potem ustaw scrollTop = 0!
   backdrop.classList.remove('hidden');
-  document.body.classList.add('modal-open');
+  lockBodyScroll();
+  resetModalScrollToTop(backdrop);
+  requestAnimationFrame(() => {
+    resetModalScrollToTop(backdrop);
+    setTimeout(() => resetModalScrollToTop(backdrop), 40);
+  });
 }
 
 function closeModalById(modalId) {
@@ -304,20 +363,24 @@ function closeModalById(modalId) {
   }
   const backdrop = document.getElementById(modalId);
   if (backdrop) {
+    resetModalScrollToTop(backdrop);
     const card = backdrop.querySelector('.modal-card');
-    if (card) card.style.transform = '';
+    if (card) {
+      card.style.transition = '';
+      card.style.transform = '';
+    }
     backdrop.classList.add('hidden');
   }
   const anyOpen = ['settingsModal', 'detailModal', 'bookFormModal', 'syncModal'].some(
     (id) => !document.getElementById(id).classList.contains('hidden')
   );
   if (!anyOpen) {
-    document.body.classList.remove('modal-open');
+    unlockBodyScroll();
   }
 }
 
 function setupSwipeToDismissModals() {
-  // Blokada przewijania strony pod spodem przy dotknięciu tła modala na iOS Safari
+  // 1. Całkowita blokada przewijania tła przy dotknięciu półprzezroczystego tła modala (.modal-backdrop)
   document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
     backdrop.addEventListener(
       'touchmove',
@@ -330,7 +393,51 @@ function setupSwipeToDismissModals() {
     );
   });
 
-  // Obsługa gestu ściągnięcia karty w dół (Swipe-to-dismiss) na każdym .modal-card
+  // 2. Izolacja przewijania wewnętrznej listy wyników wyszukiwania książek (#titleSearchResults)
+  // Gdy palec dotyka listy wyszukanych książek, przewija się WYŁĄCZNIE ta lista (bez skakania modala ani strony!)
+  const titleResultsEl = document.getElementById('titleSearchResults');
+  if (titleResultsEl) {
+    let nestedStartY = 0;
+    titleResultsEl.addEventListener(
+      'touchstart',
+      (e) => {
+        if (e.touches.length !== 1) return;
+        nestedStartY = e.touches[0].clientY;
+        e.stopPropagation();
+      },
+      { passive: true }
+    );
+
+    titleResultsEl.addEventListener(
+      'touchmove',
+      (e) => {
+        if (e.touches.length !== 1) return;
+        const currentY = e.touches[0].clientY;
+        const deltaY = currentY - nestedStartY;
+        const isScrollable = titleResultsEl.scrollHeight > titleResultsEl.clientHeight + 1;
+
+        if (!isScrollable) {
+          // Jeśli lista jest krótka i nie wymaga przewijania, nie pozwól na przypadkowe przesuwanie tła
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        const atTop = titleResultsEl.scrollTop <= 0;
+        const atBottom =
+          titleResultsEl.scrollTop + titleResultsEl.clientHeight >= titleResultsEl.scrollHeight - 1;
+
+        // Zatrzymaj przebijanie przewijania (scroll chaining) na górnej i dolnej krawędzi listy
+        if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
+          if (e.cancelable) e.preventDefault();
+        }
+        e.stopPropagation();
+      },
+      { passive: false }
+    );
+  }
+
+  // 3. Obsługa gestu ściągnięcia karty w dół (Swipe-to-dismiss) oraz kontrola aktywnego przewijania .modal-card
   document.querySelectorAll('.modal-card').forEach((card) => {
     const modalId = card.dataset.dismissTarget;
     const handleArea = card.querySelector('[data-swipe-handle]');
@@ -338,7 +445,6 @@ function setupSwipeToDismissModals() {
     let startY = 0;
     let currentDeltaY = 0;
     let isDraggingSheet = false;
-    let startedOnHandle = false;
 
     if (handleArea) {
       handleArea.addEventListener('click', (e) => {
@@ -347,22 +453,68 @@ function setupSwipeToDismissModals() {
           closeModalById(modalId);
         }
       });
-    }
 
-    card.addEventListener(
-      'touchstart',
-      (e) => {
-        if (e.touches.length !== 1) return;
-        const target = e.target;
-        startedOnHandle = Boolean(target.closest('[data-swipe-handle]'));
-
-        // Pozwól na ściągnięcie karty w dół, jeśli użytkownik ciągnie za górny uchwyt LUB jest na samej górze przewinięcia karty
-        if (startedOnHandle || (card.scrollTop <= 0 && !target.closest('input, textarea, select, button'))) {
+      // Ściąganie karty w dół wyłącznie za górny pasek uchwytu [data-swipe-handle],
+      // aby nigdy nie kolidowało z przewijaniem formularza ani listy wyszukiwania książek!
+      handleArea.addEventListener(
+        'touchstart',
+        (e) => {
+          if (e.touches.length !== 1) return;
+          if (e.target.closest('.modal-close')) return;
           startY = e.touches[0].clientY;
           currentDeltaY = 0;
           isDraggingSheet = true;
+        },
+        { passive: true }
+      );
+
+      handleArea.addEventListener(
+        'touchmove',
+        (e) => {
+          if (!isDraggingSheet || e.touches.length !== 1) return;
+          const touchY = e.touches[0].clientY;
+          const deltaY = touchY - startY;
+
+          if (deltaY > 0) {
+            currentDeltaY = deltaY;
+            card.style.transition = 'none';
+            card.style.transform = `translateY(${deltaY}px)`;
+            if (e.cancelable) e.preventDefault();
+          } else {
+            currentDeltaY = 0;
+            card.style.transform = '';
+          }
+        },
+        { passive: false }
+      );
+
+      const finishDrag = () => {
+        if (!isDraggingSheet) return;
+        isDraggingSheet = false;
+        card.style.transition = 'transform 0.26s cubic-bezier(0.32, 0.72, 0, 1)';
+
+        if (currentDeltaY > 75) {
+          card.style.transform = 'translateY(105%)';
+          setTimeout(() => {
+            closeModalById(modalId);
+          }, 210);
         } else {
-          isDraggingSheet = false;
+          card.style.transform = '';
+        }
+        currentDeltaY = 0;
+      };
+
+      handleArea.addEventListener('touchend', finishDrag, { passive: true });
+      handleArea.addEventListener('touchcancel', finishDrag, { passive: true });
+    }
+
+    // Strażnik granic przewijania samej karty .modal-card (aby ruch palcem w oknie nigdy nie przewijał strony pod spodem)
+    let cardTouchStartY = 0;
+    card.addEventListener(
+      'touchstart',
+      (e) => {
+        if (e.touches.length === 1) {
+          cardTouchStartY = e.touches[0].clientY;
         }
       },
       { passive: true }
@@ -371,44 +523,26 @@ function setupSwipeToDismissModals() {
     card.addEventListener(
       'touchmove',
       (e) => {
-        if (!isDraggingSheet) return;
-        const touchY = e.touches[0].clientY;
-        const deltaY = touchY - startY;
+        if (isDraggingSheet || e.touches.length !== 1) return;
+        if (e.target.closest('#titleSearchResults')) return;
 
-        if (deltaY > 0 && (startedOnHandle || card.scrollTop <= 0)) {
-          currentDeltaY = deltaY;
-          card.style.transition = 'none';
-          card.style.transform = `translateY(${deltaY}px)`;
+        const deltaY = e.touches[0].clientY - cardTouchStartY;
+        const canScrollCard = card.scrollHeight > card.clientHeight + 1;
+
+        if (!canScrollCard) {
           if (e.cancelable) e.preventDefault();
-        } else if (deltaY < 0 && !startedOnHandle) {
-          // Użytkownik przewija zawartość karty w dół (czyta dalej) — oddaj pełną kontrolę natywnemu scrollowi!
-          isDraggingSheet = false;
-          currentDeltaY = 0;
-          card.style.transition = '';
-          card.style.transform = '';
+          return;
+        }
+
+        const atTop = card.scrollTop <= 0;
+        const atBottom = card.scrollTop + card.clientHeight >= card.scrollHeight - 1;
+
+        if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
+          if (e.cancelable) e.preventDefault();
         }
       },
       { passive: false }
     );
-
-    const finishDrag = () => {
-      if (!isDraggingSheet) return;
-      isDraggingSheet = false;
-      card.style.transition = 'transform 0.26s cubic-bezier(0.32, 0.72, 0, 1)';
-
-      if (currentDeltaY > 85) {
-        card.style.transform = 'translateY(105%)';
-        setTimeout(() => {
-          closeModalById(modalId);
-        }, 210);
-      } else {
-        card.style.transform = '';
-      }
-      currentDeltaY = 0;
-    };
-
-    card.addEventListener('touchend', finishDrag, { passive: true });
-    card.addEventListener('touchcancel', finishDrag, { passive: true });
   });
 }
 
@@ -877,6 +1011,113 @@ async function fetchWithTimeout(url, timeoutMs = 8500) {
   }
 }
 
+/**
+ * Most CORS dla API Biblioteki Narodowej (data.bn.org.pl oraz katalogi.bn.org.pl),
+ * które nie wysyłają nagłówka Access-Control-Allow-Origin, przez co Safari blokowało bezpośredni fetch().
+ */
+async function fetchJsonViaCorsBridge(targetUrl, timeoutMs = 8500) {
+  const jinaUrl = `https://r.jina.ai/${targetUrl}`;
+  try {
+    const res = await fetchWithTimeout(jinaUrl, timeoutMs);
+    if (res.ok) {
+      const text = await res.text();
+      let payload = text.trim();
+      const marker = 'Markdown Content:';
+      const markerIdx = payload.indexOf(marker);
+      if (markerIdx !== -1) {
+        payload = payload.slice(markerIdx + marker.length).trim();
+      }
+      const braceIdx = payload.indexOf('{');
+      if (braceIdx !== -1) {
+        const parsed = JSON.parse(payload.slice(braceIdx));
+        if (parsed && parsed.data && typeof parsed.data.content === 'string') {
+          return JSON.parse(parsed.data.content);
+        }
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  // Fallback bezpośredni (gdyby serwer docelowy dodał nagłówki CORS)
+  try {
+    const directRes = await fetchWithTimeout(targetUrl, 4500);
+    if (directRes.ok) {
+      return await directRes.json();
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+function parseOmnisPrimoDoc(doc, fallbackIsbn = '') {
+  const pnx = doc?.pnx;
+  if (!pnx) return null;
+  const addata = pnx.addata || {};
+  const disp = pnx.display || {};
+
+  let title = (addata.btitle?.[0] || disp.title?.[0] || '')
+    .replace(/\s*\/\s*[^/]+$/, '')
+    .replace(/\s*\[Dokument.*?\].*$/i, '')
+    .replace(/\.$/, '')
+    .trim();
+  if (!title) return null;
+
+  let author = '';
+  if (addata.aufirst?.[0] && addata.aulast?.[0]) {
+    author = `${addata.aufirst[0]} ${addata.aulast[0]}`.trim();
+  } else if (addata.au?.[0] || disp.lds01?.[0] || disp.creator?.[0]) {
+    const rawAu = (addata.au?.[0] || disp.lds01?.[0] || disp.creator?.[0] || '')
+      .split('$$')[0]
+      .replace(/\([^)]*\)/g, '')
+      .replace(/Autor$/i, '')
+      .replace(/\.$/, '')
+      .trim();
+    if (rawAu.includes(',')) {
+      const parts = rawAu.split(',').map((s) => s.trim()).filter(Boolean);
+      author = parts.length >= 2 ? `${parts[1]} ${parts[0]}`.trim() : rawAu;
+    } else {
+      author = rawAu;
+    }
+  }
+
+  let publisher = (addata.pub?.[0] || disp.publisher?.[0] || '')
+    .replace(/^[^:]+:\s*/, '')
+    .replace(/[,:;.]+\s*$/, '')
+    .replace(/^"|"$/g, '')
+    .trim();
+
+  const publishedYear = (addata.date?.[0] || disp.creationdate?.[0] || '').replace(/\D/g, '').slice(0, 4);
+
+  let pages = '';
+  const fmtStr = disp.format?.[0] || '';
+  const pageMatch =
+    fmtStr.match(/(\d+)\s*(?:,\s*\[[^\]]*\]\s*)?(?:s\.|str)/i) ||
+    fmtStr.match(/^(\d+)/);
+  if (pageMatch) {
+    pages = Number(pageMatch[1]);
+  }
+
+  const rawGenre = (disp.genre?.[0] || disp.lds12?.[0] || '').replace(/\.$/, '').trim();
+  const isbnList = Array.isArray(addata.isbn) ? addata.isbn.map((i) => normalizeIsbn(i)).filter(Boolean) : [];
+  const bestIsbn =
+    (fallbackIsbn && isbnList.includes(fallbackIsbn) ? fallbackIsbn : '') ||
+    isbnList.find((i) => i.length === 13) ||
+    isbnList[0] ||
+    fallbackIsbn;
+
+  return {
+    isbn: bestIsbn,
+    title,
+    author,
+    publisher,
+    publishedYear,
+    pages,
+    category: rawGenre,
+    description: '',
+    isEbookHint: /online|elektroniczny/i.test(fmtStr)
+  };
+}
+
 function stripHtmlTags(html) {
   if (!html) return '';
   return String(html)
@@ -1140,13 +1381,24 @@ function parseBibliotekaNarodowaBib(bib, fallbackIsbn = '') {
 
 async function fetchFromBibliotekaNarodowa(isbn) {
   try {
-    // KLUCZOWE: limit=1 sprawia, że baza Biblioteki Narodowej kończy zapytanie natychmiast po znalezieniu ISBN (w ~2s zamiast pełnego skanu tabeli!)
-    const url = `https://data.bn.org.pl/api/institutions/bibs.json?isbnIssn=${encodeURIComponent(isbn)}&limit=1`;
-    const res = await fetchWithTimeout(url, 9500);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.bibs?.length) return null;
-    return parseBibliotekaNarodowaBib(data.bibs[0], isbn);
+    // 1. Zapytanie do API Biblioteki Narodowej (z limit=1 i mostem CORS dla Safari)
+    const bnUrl = `https://data.bn.org.pl/api/institutions/bibs.json?isbnIssn=${encodeURIComponent(isbn)}&limit=1`;
+    const bnData = await fetchJsonViaCorsBridge(bnUrl, 8500);
+    if (bnData?.bibs?.length) {
+      const parsed = parseBibliotekaNarodowaBib(bnData.bibs[0], isbn);
+      if (parsed && parsed.title) return parsed;
+    }
+
+    // 2. Fallback do nowego katalogu OMNIS Primo Biblioteki Narodowej
+    const omnisUrl = `https://katalogi.bn.org.pl/primaws/rest/pub/pnxs?q=${encodeURIComponent(
+      'any,contains,' + isbn
+    )}&vid=48OMNIS_NLOP:48OMNIS_NLOP&lang=pl&offset=0&limit=1`;
+    const omnisData = await fetchJsonViaCorsBridge(omnisUrl, 8000);
+    if (omnisData?.docs?.length) {
+      const parsedOmnis = parseOmnisPrimoDoc(omnisData.docs[0], isbn);
+      if (parsedOmnis && parsedOmnis.title) return parsedOmnis;
+    }
+    return null;
   } catch (e) {
     return null;
   }
@@ -1211,17 +1463,9 @@ async function enrichBookByTitleAuthor(title, author, isbn = '') {
   const cleanAuthor = (author || '').split(',')[0].trim();
   const q = `${cleanTitle} ${cleanAuthor}`.trim();
 
-  // 1. Sprawdź czy OpenLibrary ma okładkę bezpośrednio po ISBN
-  if (isbn) {
-    const olIsbnCover = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`;
-    if (await checkImageExists(olIsbnCover)) {
-      result.coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-      result.source = 'Open Library';
-    }
-  }
-
-  // 2. Odpytaj równolegle Apple Books (iTunes PL/US), Open Library Search oraz Google Books
-  const [applePlRes, openLibSearchRes, googleSearchRes] = await Promise.allSettled([
+  // 1. Odpytaj równolegle Apple Books (iTunes PL), Open Library Search, Google Books oraz okładkę OpenLibrary po ISBN
+  const olIsbnCoverUrl = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : '';
+  const [applePlRes, openLibSearchRes, googleSearchRes, olCoverExistsRes] = await Promise.allSettled([
     fetchWithTimeout(
       `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=ebook&limit=5&country=pl`,
       6000
@@ -1233,8 +1477,14 @@ async function enrichBookByTitleAuthor(title, author, isbn = '') {
     fetchWithTimeout(
       `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=4`,
       6000
-    ).then((r) => (r.ok ? r.json() : null))
+    ).then((r) => (r.ok ? r.json() : null)),
+    olIsbnCoverUrl ? checkImageExists(olIsbnCoverUrl) : Promise.resolve(false)
   ]);
+
+  if (olCoverExistsRes.status === 'fulfilled' && olCoverExistsRes.value) {
+    result.coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+    result.source = 'Open Library';
+  }
 
   // Przeszukaj wyniki Google Books (jeśli brak limitu 429)
   const gItems = googleSearchRes.status === 'fulfilled' ? googleSearchRes.value?.items || [] : [];
@@ -1361,14 +1611,20 @@ function openDetailModal(bookId) {
     descBox.classList.add('hidden');
   }
 
-  renderInteractiveStars('detailStars', Number(book.rating) || 0, (newRating) => {
+  const handleDetailRatingSelect = (newRating) => {
     book.rating = newRating;
     book.updatedAt = new Date().toISOString();
-    saveLocalData(true);
+    renderInteractiveStars('detailStars', newRating, handleDetailRatingSelect);
     updateDetailRatingLabel(newRating);
+    saveLocalData(true);
     renderAll();
-    showToast(`Oceniono „${book.title}” na ${newRating}/5`);
-  });
+    showToast(
+      newRating > 0
+        ? `Oceniono „${book.title}” na ${newRating}/5`
+        : `Wyczyszczono ocenę dla „${book.title}”`
+    );
+  };
+  renderInteractiveStars('detailStars', Number(book.rating) || 0, handleDetailRatingSelect);
   updateDetailRatingLabel(Number(book.rating) || 0);
 
   // Szybka zmiana nośnika (Papier / E-book / Obie wersje)
@@ -1633,38 +1889,19 @@ async function stopCameraScanner() {
   }
 }
 
-/* Wielokatalogowe wyszukiwanie po tytule i autorze (Biblioteka Narodowa + Apple Books + OpenLibrary + Google Books) */
+/* Wielokatalogowe wyszukiwanie po tytule i autorze (Biblioteka Narodowa OMNIS + Apple Books + OpenLibrary + Google Books) */
 async function searchBibliotekaNarodowaByQuery(query) {
-  const words = query
-    .replace(/[,;–—-]+/g, ' ')
-    .split(/\s+/)
-    .map((w) => w.trim())
-    .filter(Boolean);
-
-  const urls = [];
-  if (words.length >= 2) {
-    // Np. "Drood Simmons" lub "Drood Dan Simmons" -> title=Drood & author=Simmons
-    const firstWord = words[0];
-    const lastWord = words[words.length - 1];
-    urls.push(
-      `https://data.bn.org.pl/api/institutions/bibs.json?title=${encodeURIComponent(firstWord)}&author=${encodeURIComponent(
-        lastWord
-      )}&language=polski&limit=2`
-    );
-  }
-  urls.push(
-    `https://data.bn.org.pl/api/institutions/bibs.json?title=${encodeURIComponent(query)}&language=polski&kind=ksi%C4%85%C5%BCka&limit=2`
-  );
-
-  const settled = await Promise.allSettled(
-    urls.map((u) => fetchWithTimeout(u, 5500).then((r) => (r.ok ? r.json() : null)))
-  );
-
   const items = [];
-  for (const res of settled) {
-    if (res.status === 'fulfilled' && Array.isArray(res.value?.bibs)) {
-      for (const bib of res.value.bibs) {
-        const parsed = parseBibliotekaNarodowaBib(bib);
+  try {
+    // Katalog OMNIS Primo Biblioteki Narodowej obsługuje jednoczesne wyszukiwanie tytułu i autora w jednym zapytaniu!
+    const omnisUrl = `https://katalogi.bn.org.pl/primaws/rest/pub/pnxs?q=${encodeURIComponent(
+      'any,contains,' + query
+    )}&qInclude=facet_rtype,exact,books&vid=48OMNIS_NLOP:48OMNIS_NLOP&lang=pl&offset=0&limit=5`;
+
+    const omnisData = await fetchJsonViaCorsBridge(omnisUrl, 7500);
+    if (Array.isArray(omnisData?.docs)) {
+      for (const doc of omnisData.docs) {
+        const parsed = parseOmnisPrimoDoc(doc);
         if (parsed && parsed.title) {
           items.push({
             isbn: parsed.isbn || '',
@@ -1681,18 +1918,24 @@ async function searchBibliotekaNarodowaByQuery(query) {
         }
       }
     }
-  }
+  } catch (e) {}
+
   return items;
 }
 
 async function handleSearchByTitle() {
-  const query = document.getElementById('titleQueryInput').value.trim();
+  const inputEl = document.getElementById('titleQueryInput');
+  const query = inputEl.value.trim();
   const resultsEl = document.getElementById('titleSearchResults');
   if (!query) return;
 
-  resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#3b82f6;">Szukam „${escapeHtml(
+  // Schowaj klawiaturę ekranową iOS po zatwierdzeniu wyszukiwania, aby nie przesuwała widoku
+  inputEl.blur();
+  resultsEl.scrollTop = 0;
+
+  resultsEl.innerHTML = `<div class="title-search-status" style="color:#3b82f6;">Szukam „${escapeHtml(
     query
-  )}” w 4 katalogach (Biblioteka Narodowa, Apple Books, OpenLibrary, Google Books)...</div>`;
+  )}” (Biblioteka Narodowa, Apple Books, OpenLibrary, Google Books)...</div>`;
 
   try {
     const [bnRes, applePlRes, openLibRes, googleRes] = await Promise.allSettled([
@@ -1786,7 +2029,7 @@ async function handleSearchByTitle() {
     });
 
     if (candidates.length === 0) {
-      resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#d97706;">Brak wyników dla „${escapeHtml(
+      resultsEl.innerHTML = `<div class="title-search-status" style="color:#d97706;">Brak wyników dla „${escapeHtml(
         query
       )}”. Spróbuj wpisać sam tytuł lub uzupełnij pola ręcznie poniżej.</div>`;
       return;
@@ -1813,26 +2056,30 @@ async function handleSearchByTitle() {
     }
 
     resultsEl.innerHTML = '';
+    resultsEl.scrollTop = 0;
+
     unique.forEach((bookItem) => {
       const row = document.createElement('div');
       row.className = 'title-result-item';
       const metaParts = [
         bookItem.author,
         bookItem.publisher ? `${bookItem.publisher}` : '',
-        bookItem.publishedYear ? `(${bookItem.publishedYear})` : '',
+        bookItem.publishedYear ? `${bookItem.publishedYear}` : '',
         bookItem.pages ? `${bookItem.pages} str.` : '',
-        bookItem.isbn ? `ISBN: ${bookItem.isbn}` : '',
-        `[${bookItem.source}]`
+        bookItem.isbn ? `ISBN ${bookItem.isbn}` : ''
       ].filter(Boolean);
 
       row.innerHTML = `
         ${
           bookItem.coverUrl
-            ? `<img src="${escapeHtml(bookItem.coverUrl)}" alt="" />`
-            : `<div style="width:32px;height:46px;background:#332218;border-radius:3px;flex-shrink:0"></div>`
+            ? `<img src="${escapeHtml(bookItem.coverUrl)}" alt="" loading="lazy" />`
+            : `<div class="title-result-thumb-placeholder"></div>`
         }
         <div class="title-result-info">
-          <strong>${escapeHtml(bookItem.title || 'Bez tytułu')}</strong>
+          <div class="title-result-head">
+            <strong>${escapeHtml(bookItem.title || 'Bez tytułu')}</strong>
+            <em class="title-result-source">${escapeHtml(bookItem.source)}</em>
+          </div>
           <span>${escapeHtml(metaParts.join(' • '))}</span>
         </div>
       `;
@@ -1858,33 +2105,31 @@ async function handleSearchByTitle() {
         showLookupFeedback('success', `Wybrano wydanie: „${bookItem.title}” (${bookItem.source})`);
 
         // Jeśli wybrano pozycję z Apple Books / OpenLibrary bez polskiego ISBN lub liczby stron,
-        // dociągnij w tle dane polskiego wydania z Biblioteki Narodowej!
+        // dociągnij w tle dane polskiego wydania z Biblioteki Narodowej przez most CORS!
         if ((!bookItem.isbn || !bookItem.pages || !bookItem.publisher) && bookItem.title) {
           const authorLastName = (bookItem.author || '').split(/\s+/).pop() || '';
           try {
-            const bnUrl = `https://data.bn.org.pl/api/institutions/bibs.json?title=${encodeURIComponent(
-              bookItem.title
-            )}&author=${encodeURIComponent(authorLastName)}&language=polski&limit=1`;
-            const bnR = await fetchWithTimeout(bnUrl, 5500);
-            if (bnR.ok) {
-              const bnJ = await bnR.json();
-              if (bnJ?.bibs?.length) {
-                const bnParsed = parseBibliotekaNarodowaBib(bnJ.bibs[0]);
-                if (bnParsed) {
-                  if (!document.getElementById('isbnInput').value && bnParsed.isbn) {
-                    document.getElementById('isbnInput').value = bnParsed.isbn;
-                  }
-                  if (!document.getElementById('publisherInput').value && bnParsed.publisher) {
-                    document.getElementById('publisherInput').value = bnParsed.publisher;
-                  }
-                  if (!document.getElementById('pagesInput').value && bnParsed.pages) {
-                    document.getElementById('pagesInput').value = bnParsed.pages;
-                  }
-                  if (!document.getElementById('categoryInput').value && bnParsed.category) {
-                    const catPl = translateGenreToPolish(bnParsed.category);
-                    document.getElementById('categoryInput').value = catPl;
-                    highlightCategoryChip(catPl);
-                  }
+            const qStr = `${bookItem.title} ${authorLastName}`.trim();
+            const omnisUrl = `https://katalogi.bn.org.pl/primaws/rest/pub/pnxs?q=${encodeURIComponent(
+              'any,contains,' + qStr
+            )}&qInclude=facet_rtype,exact,books&vid=48OMNIS_NLOP:48OMNIS_NLOP&lang=pl&offset=0&limit=1`;
+            const omnisData = await fetchJsonViaCorsBridge(omnisUrl, 6500);
+            if (omnisData?.docs?.length) {
+              const bnParsed = parseOmnisPrimoDoc(omnisData.docs[0]);
+              if (bnParsed) {
+                if (!document.getElementById('isbnInput').value && bnParsed.isbn) {
+                  document.getElementById('isbnInput').value = bnParsed.isbn;
+                }
+                if (!document.getElementById('publisherInput').value && bnParsed.publisher) {
+                  document.getElementById('publisherInput').value = bnParsed.publisher;
+                }
+                if (!document.getElementById('pagesInput').value && bnParsed.pages) {
+                  document.getElementById('pagesInput').value = bnParsed.pages;
+                }
+                if (!document.getElementById('categoryInput').value && bnParsed.category) {
+                  const catPl = translateGenreToPolish(bnParsed.category);
+                  document.getElementById('categoryInput').value = catPl;
+                  highlightCategoryChip(catPl);
                 }
               }
             }
@@ -1895,7 +2140,7 @@ async function handleSearchByTitle() {
       resultsEl.appendChild(row);
     });
   } catch (e) {
-    resultsEl.innerHTML = `<div style="font-size:0.8rem;color:#ef4444;">Błąd połączenia podczas wyszukiwania.</div>`;
+    resultsEl.innerHTML = `<div class="title-search-status" style="color:#ef4444;">Błąd połączenia podczas wyszukiwania.</div>`;
   }
 }
 
@@ -2557,14 +2802,27 @@ function setupResizeObserver() {
 
 function renderInteractiveStars(containerId, currentRating, onSelect) {
   const container = document.getElementById(containerId);
+  if (!container) return;
   container.innerHTML = '';
+  const numericRating = Number(currentRating) || 0;
+
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `star-btn ${i <= currentRating ? 'filled' : ''}`;
-    btn.innerHTML = i <= currentRating ? SVG_ICONS.starFilled(22) : SVG_ICONS.starOutline(22);
+    const isFilled = i <= numericRating;
+    btn.className = `star-btn ${isFilled ? 'filled' : ''}`;
+    btn.setAttribute('aria-checked', String(i === numericRating));
+    btn.innerHTML = isFilled ? SVG_ICONS.starFilled(24) : SVG_ICONS.starOutline(24);
     btn.title = `Oceń na ${i}/5`;
-    btn.addEventListener('click', () => onSelect(i));
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Natychmiast odśwież wygląd gwiazdek w aktywnym oknie jeszcze przed wywołaniem callbacku
+      renderInteractiveStars(containerId, i, onSelect);
+      if (typeof onSelect === 'function') {
+        onSelect(i);
+      }
+    });
     container.appendChild(btn);
   }
 }

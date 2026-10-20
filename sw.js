@@ -1,9 +1,9 @@
-const CACHE_NAME = 'biblioteczka-pwa-v6';
+const CACHE_NAME = 'biblioteczka-pwa-v8';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
+  './styles.css?v=8',
+  './app.js?v=8',
   './manifest.json',
   './icons/icon.svg',
   './data/books.json'
@@ -39,21 +39,14 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Nigdy nie buforuj zapytań do GitHub API ani zewnętrznych katalogów książek
-  if (
-    url.hostname.includes('api.github.com') ||
-    url.hostname.includes('googleapis.com') ||
-    url.hostname.includes('data.bn.org.pl') ||
-    url.hostname.includes('itunes.apple.com') ||
-    url.hostname.includes('openlibrary.org') ||
-    url.pathname.includes('/api/books')
-  ) {
+  // Nigdy nie przechwytuj zapytań do zewnętrznych domen (API katalogów, okładek, GitHuba)
+  if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Network-first (z fallbackiem do cache offline) dla plików aplikacji i bazy JSON
+  // Network-first z pominięciem przestarzałego cache HTTP przeglądarki dla plików aplikacji
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-cache' })
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
@@ -61,6 +54,6 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       })
-      .catch(() => caches.match(req))
+      .catch(() => caches.match(req, { ignoreSearch: true }))
   );
 });
